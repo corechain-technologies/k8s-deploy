@@ -40,6 +40,28 @@ const namespace = "namespace";
 describe("Kubectl class", () => {
   const kubectl = new Kubectl(kubectlPath, namespace);
 
+  describe("with unspecified namespace", () => {
+    const kubectl = new Kubectl(kubectlPath);
+    const execReturn = { exitCode: 0, stdout: "Output", stderr: "" };
+
+    beforeEach(() => {
+      jest.spyOn(exec, "getExecOutput").mockImplementation(async () => {
+        return execReturn;
+      });
+    });
+
+    test("", async () => {
+      const configPaths = "configPaths";
+      const result = await kubectl.apply(configPaths);
+      expect(result).toBe(execReturn);
+      expect(exec.getExecOutput).toHaveBeenCalledWith(
+        kubectlPath,
+        ["apply", "-f", configPaths],
+        { silent: false },
+      );
+    });
+  });
+
   describe("with a success exec return", () => {
     const execReturn = { exitCode: 0, stdout: "Output", stderr: "" };
 

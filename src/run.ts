@@ -28,7 +28,7 @@ export async function run() {
   const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
   // create kubectl
   const kubectlPath = await getKubectlPath();
-  const namespace = core.getInput("namespace") || "default";
+  const namespace = core.getInput("namespace");
   const kubectl = new Kubectl(kubectlPath, namespace, true);
 
   // run action

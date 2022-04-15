@@ -16,7 +16,7 @@ export class Kubectl {
 
   constructor(
     kubectlPath: string,
-    namespace: string = "default",
+    namespace: string = "",
     ignoreSSLErrors: boolean = false
   ) {
     this.kubectlPath = kubectlPath;
@@ -147,7 +147,10 @@ export class Kubectl {
     if (this.ignoreSSLErrors) {
       args.push("--insecure-skip-tls-verify");
     }
-    args = args.concat(["--namespace", this.namespace]);
+
+    if (this.namespace.length) {
+      args = args.concat(["--namespace", this.namespace]);
+    }
 
     core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`);
     return await getExecOutput(this.kubectlPath, args, { silent });
