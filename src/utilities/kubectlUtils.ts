@@ -51,6 +51,7 @@ export async function getLastSuccessfulRunSha(
 
 export async function annotateChildPods(
    kubectl: Kubectl,
+   namespace: string,
    resourceType: string,
    resourceName: string,
    annotationKeyValStr: string,
@@ -58,7 +59,7 @@ export async function annotateChildPods(
 ): Promise<ExecOutput[]> {
    let owner = resourceName
    if (resourceType.toLowerCase().indexOf('deployment') > -1) {
-      owner = await kubectl.getNewReplicaSet(resourceName)
+      owner = await kubectl.getNewReplicaSet(namespace, resourceName)
    }
 
    const commandExecutionResults = []

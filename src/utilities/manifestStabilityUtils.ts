@@ -26,19 +26,19 @@ export async function checkManifestStability(
             checkForErrors([result])
          } catch (ex) {
             core.error(ex)
-            await kubectl.describe(resource.type, resource.name)
+            await kubectl.describe(resource.namespace, resource.type, resource.name)
             rolloutStatusHasErrors = true
          }
       }
 
       if (resource.type == KubernetesConstants.KubernetesWorkload.POD) {
          try {
-            await checkPodStatus(kubectl, resource.name)
+            await checkPodStatus(kubectl, resource.namespace, resource.name)
          } catch (ex) {
             core.warning(
                `Could not determine pod status: ${JSON.stringify(ex)}`
             )
-            await kubectl.describe(resource.type, resource.name)
+            await kubectl.describe(resource.namespace, resource.type, resource.name)
          }
       }
       if (
@@ -64,7 +64,7 @@ export async function checkManifestStability(
             core.warning(
                `Could not determine service status of: ${resource.name} Error: ${ex}`
             )
-            await kubectl.describe(resource.type, resource.name)
+            await kubectl.describe(resource.namespace, resource.type, resource.name)
          }
       }
    }
@@ -76,6 +76,7 @@ export async function checkManifestStability(
 
 export async function checkPodStatus(
    kubectl: Kubectl,
+   namespace: string,
    podName: string
 ): Promise<void> {
    const sleepTimeout = 10 * 1000 // 10 seconds
@@ -123,7 +124,7 @@ export async function checkPodStatus(
    }
 
    if (kubectlDescribeNeeded) {
-      await kubectl.describe('pod', podName)
+      await kubectl.describe(namespace, 'pod', podName)
    }
 }
 
