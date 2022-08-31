@@ -202,6 +202,7 @@ async function annotateResources(
          ;(
             await annotateChildPods(
                kubectl,
+               namespace,
                resource.type,
                resource.name,
                annotationKeyValStr,

@@ -120,7 +120,7 @@ describe('Kubectl class', () => {
       it('describes a resource', async () => {
          const resourceType = 'type'
          const resourceName = 'name'
-         const result = await kubectl.describe(resourceType, resourceName)
+         const result = await kubectl.describe(testNamespace, resourceType, resourceName)
          expect(result).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
@@ -128,8 +128,7 @@ describe('Kubectl class', () => {
                'describe',
                resourceType,
                resourceName,
-               '--namespace',
-               testNamespace
+               `--namespace="${testNamespace}"`,
             ],
             {silent: false}
          )
@@ -138,7 +137,7 @@ describe('Kubectl class', () => {
       it('describes a resource silently', async () => {
          const resourceType = 'type'
          const resourceName = 'name'
-         const result = await kubectl.describe(resourceType, resourceName, true)
+         const result = await kubectl.describe(testNamespace, resourceType, resourceName, true)
          expect(result).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
@@ -146,8 +145,7 @@ describe('Kubectl class', () => {
                'describe',
                resourceType,
                resourceName,
-               '--namespace',
-               testNamespace
+               `--namespace="${testNamespace}"`,
             ],
             {silent: true}
          )
@@ -278,8 +276,8 @@ describe('Kubectl class', () => {
             [
                'rollout',
                'status',
-               `--namespace=${testNamespace}`,
                `${resourceType}/${name}`,
+               `--namespace=${testNamespace}`,
             ],
             {silent: false}
          )
@@ -360,7 +358,7 @@ describe('Kubectl class', () => {
       })
 
       const deployment = 'deployment'
-      const result = await kubectl.getNewReplicaSet(deployment)
+      const result = await kubectl.getNewReplicaSet(testNamespace, deployment)
       expect(result).toBe(name)
    })
 })
