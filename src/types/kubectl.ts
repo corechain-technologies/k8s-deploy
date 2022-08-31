@@ -8,6 +8,7 @@ import {exec} from 'child_process'
 export interface Resource {
    name: string
    type: string
+   namespace: string
 }
 
 export class Kubectl {
@@ -144,6 +145,7 @@ export class Kubectl {
    }
 
    public async checkRolloutStatus(
+      namespace: string,
       resourceType: string,
       name: string
    ): Promise<ExecOutput> {
@@ -192,8 +194,12 @@ export class Kubectl {
       if (this.ignoreSSLErrors) {
          flags.push('--insecure-skip-tls-verify')
       }
-      if (this.namespace) {
-         flags.push('--namespace', this.namespace)
+
+      if (this.namespace && this.namespace != 'default') {
+         const hasOverridingNamespaceArgument = flags.some(a => /\s?(?:--namespace|-n)\b/.test(a))
+         if (!hasOverridingNamespaceArgument) {
+            flags.push('--namespace', this.namespace)
+         }
       }
 
       return flags
