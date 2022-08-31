@@ -54,18 +54,22 @@ export class Kubectl {
    }
 
    public async describe(
+      namespace: string,
       resourceType: string,
       resourceName: string,
       silent: boolean = false
    ): Promise<ExecOutput> {
-      return await this.execute(
-         ['describe', resourceType, resourceName],
-         silent
-      )
+      const args = ['describe', resourceType, resourceName]
+
+      if (namespace) {
+         args.push(`--namespace="${namespace}"`)
+      }
+
+      return await this.execute(args, silent)
    }
 
-   public async getNewReplicaSet(deployment: string) {
-      const result = await this.describe('deployment', deployment, true)
+   public async getNewReplicaSet(namespace: string, deployment: string) {
+      const result = await this.describe(namespace, 'deployment', deployment, true)
 
       let newReplicaSet = ''
       if (result?.stdout) {
