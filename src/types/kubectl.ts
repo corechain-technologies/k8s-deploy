@@ -7,6 +7,7 @@ import * as io from '@actions/io'
 export interface Resource {
    name: string
    type: string
+   namespace: string
 }
 
 export class Kubectl {
@@ -130,12 +131,14 @@ export class Kubectl {
    }
 
    public async checkRolloutStatus(
+      namespace: string,
       resourceType: string,
       name: string
    ): Promise<ExecOutput> {
       return await this.execute([
          'rollout',
          'status',
+         `--namespace=${namespace}`,
          `${resourceType}/${name}`
       ])
    }
@@ -167,7 +170,10 @@ export class Kubectl {
          args.push('--insecure-skip-tls-verify')
       }
       if (this.namespace && this.namespace != 'default') {
-         args = args.concat(['--namespace', this.namespace])
+         const hasOverridingNamespaceArgument = args.some(a => /\s?(?:--namespace|-n)\b/.test(a))
+         if (!hasOverridingNamespaceArgument) {
+            args = args.concat(['--namespace', this.namespace])
+         }
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
       return await getExecOutput(this.kubectlPath, args, {silent})

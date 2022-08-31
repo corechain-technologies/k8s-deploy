@@ -270,7 +270,7 @@ describe('Kubectl class', () => {
       it('checks rollout status', async () => {
          const resourceType = 'type'
          const name = 'name'
-         expect(await kubectl.checkRolloutStatus(resourceType, name)).toBe(
+         expect(await kubectl.checkRolloutStatus(testNamespace, resourceType, name)).toBe(
             execReturn
          )
          expect(exec.getExecOutput).toBeCalledWith(
@@ -278,9 +278,8 @@ describe('Kubectl class', () => {
             [
                'rollout',
                'status',
+               `--namespace=${testNamespace}`,
                `${resourceType}/${name}`,
-               '--namespace',
-               testNamespace
             ],
             {silent: false}
          )

@@ -19,8 +19,9 @@ export async function checkManifestStability(
       ) {
          try {
             const result = await kubectl.checkRolloutStatus(
+               resource.namespace,
                resource.type,
-               resource.name
+               resource.name,
             )
             checkForErrors([result])
          } catch (ex) {
