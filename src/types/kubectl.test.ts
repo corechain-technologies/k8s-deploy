@@ -117,7 +117,8 @@ describe('Kubectl class', () => {
                'describe',
                resourceType,
                resourceName,
-               `--namespace=${testNamespace}`,
+               '--namespace',
+               testNamespace,
             ],
             {silent: false}
          )
@@ -134,7 +135,8 @@ describe('Kubectl class', () => {
                'describe',
                resourceType,
                resourceName,
-               `--namespace=${testNamespace}`,
+               '--namespace',
+               testNamespace,
             ],
             {silent: true}
          )

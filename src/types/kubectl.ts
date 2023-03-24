@@ -62,10 +62,6 @@ export class Kubectl {
    ): Promise<ExecOutput> {
       const args = ['describe', resourceType, resourceName]
 
-      if (namespace) {
-         args.push(`--namespace=${namespace}`)
-      }
-
       return await this.execute(args, silent)
    }
 
@@ -158,10 +154,6 @@ export class Kubectl {
          'status',
          `${resourceType}/${name}`
       ];
-
-      if (namespace) {
-         args.push(`--namespace=${namespace}`)
-      }
 
       return await this.execute(args);
    }
