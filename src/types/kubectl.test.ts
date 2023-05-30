@@ -277,7 +277,8 @@ describe('Kubectl class', () => {
             [
                'rollout',
                'status',
-               `--namespace="${testNamespace}"`,
+               '--namespace',
+               testNamespace,
                `${resourceType}/${name}`,
             ],
             {silent: false}

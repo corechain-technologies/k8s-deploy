@@ -152,7 +152,7 @@ export class Kubectl {
       const args = [
          'rollout',
          'status',
-         ... (namespace ? [ `--namespace="${namespace}"` ] : []),
+         ... (namespace ? [ '--namespace', namespace ] : []),
          `${resourceType}/${name}`
       ];
 
