@@ -15,9 +15,7 @@ jobs:
               fetch-depth: 0
          - name: Test release
            run: |
-              npm install n 
-              n latest
-              npm test
+              npm run test
          - name: Get branch ending
            run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/} | sed 's:.*/::')"
            id: extract-branch
