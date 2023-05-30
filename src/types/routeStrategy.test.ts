@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import {parseRouteStrategy, RouteStrategy} from './routeStrategy'
 
 describe('Route strategy type', () => {

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import {DockerExec} from './docker'
 import * as actions from '@actions/exec'
 
@@ -12,7 +14,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vitest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })
@@ -60,7 +62,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 3, stdout: '', stderr: ''}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vitest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })
@@ -80,7 +82,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 0, stdout: '', stderr: 'Output'}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vitest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })

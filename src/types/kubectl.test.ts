@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vitest } from "vitest";
+
 import {getKubectlPath, Kubectl} from './kubectl'
 import * as exec from '@actions/exec'
 import * as io from '@actions/io'
@@ -10,27 +12,27 @@ describe('Kubectl path', () => {
    const path = 'path'
 
    it('gets the kubectl path', async () => {
-      jest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => path)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => path)
 
       expect(await getKubectlPath()).toBe(path)
    })
 
    it('gets the kubectl path with version', async () => {
-      jest.spyOn(core, 'getInput').mockImplementationOnce(() => version)
-      jest.spyOn(toolCache, 'find').mockImplementationOnce(() => path)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => version)
+      vitest.spyOn(toolCache, 'find').mockImplementationOnce(() => path)
 
       expect(await getKubectlPath()).toBe(path)
    })
 
    it('throws if kubectl not found', async () => {
       // without version
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
       await expect(() => getKubectlPath()).rejects.toThrow()
 
       // with verision
-      jest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
       await expect(() => getKubectlPath()).rejects.toThrow()
    })
 })
@@ -39,23 +41,12 @@ const kubectlPath = 'kubectlPath'
 const testNamespace = 'testNamespace'
 const defaultNamespace = 'default'
 describe('Kubectl class', () => {
-   describe('default namespace behavior', () => {
-      const kubectl = new Kubectl(kubectlPath, defaultNamespace)
-      const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
-
-      beforeEach(() => {
-         jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-            return execReturn
-         })
-      })
-   })
-
    describe('with a success exec return in testNamespace', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
       const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
       beforeEach(() => {
-         jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+         vitest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })
@@ -267,9 +258,8 @@ describe('Kubectl class', () => {
             [
                'rollout',
                'status',
+               `--namespace="${testNamespace}"`,
                `${resourceType}/${name}`,
-               '--namespace',
-               testNamespace,
             ],
             {silent: false}
          )
@@ -345,7 +335,7 @@ describe('Kubectl class', () => {
          stderr: ''
       }
 
-      jest.spyOn(exec, 'getExecOutput').mockImplementationOnce(async () => {
+      vitest.spyOn(exec, 'getExecOutput').mockImplementationOnce(async () => {
          return describeReturn
       })
 
@@ -358,7 +348,7 @@ describe('Kubectl class', () => {
       const skipTls = true
       const kubectl = new Kubectl(kubectlPath, testNamespace, skipTls)
 
-      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+      vitest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
          return {exitCode: 0, stderr: '', stdout: ''}
       })
 

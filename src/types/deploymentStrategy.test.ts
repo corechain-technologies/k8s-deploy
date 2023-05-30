@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import {DeploymentStrategy, parseDeploymentStrategy} from './deploymentStrategy'
 
 describe('Deployment strategy type', () => {

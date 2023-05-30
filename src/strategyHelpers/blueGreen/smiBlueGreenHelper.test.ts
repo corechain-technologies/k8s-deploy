@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import * as core from '@actions/core'
 import {TrafficSplitObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
@@ -26,7 +28,7 @@ import {
 } from './smiBlueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
 
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 
 const kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
@@ -59,12 +61,12 @@ describe('SMI Helper tests', () => {
       //@ts-ignore
       Kubectl.mockClear()
 
-      jest
+      vitest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve(''))
 
       testObjects = getManifestObjects(ingressFilepath)
-      jest
+      vitest
          .spyOn(fileHelper, 'writeObjectsToFile')
          .mockImplementationOnce(() => [''])
    })
@@ -160,7 +162,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('validateTrafficSplitsState', async () => {
-      jest
+      vitest
          .spyOn(bgHelper, 'fetchResource')
          .mockImplementation(() => Promise.resolve(mockTsObject))
 
@@ -173,7 +175,7 @@ describe('SMI Helper tests', () => {
 
       const mockTsCopy = JSON.parse(JSON.stringify(mockTsObject))
       mockTsCopy.spec.backends[0].weight = MAX_VAL
-      jest
+      vitest
          .spyOn(bgHelper, 'fetchResource')
          .mockImplementation(() => Promise.resolve(mockTsCopy))
 
@@ -183,7 +185,7 @@ describe('SMI Helper tests', () => {
       )
       expect(valResult).toBe(false)
 
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() => Promise.resolve(null))
       valResult = await validateTrafficSplitsState(
          kc,
          testObjects.serviceEntityList

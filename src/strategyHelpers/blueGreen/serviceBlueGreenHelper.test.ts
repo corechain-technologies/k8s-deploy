@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import * as core from '@actions/core'
 import {
    BLUE_GREEN_VERSION_LABEL,
@@ -14,7 +16,7 @@ import {
 
 let testObjects
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
 describe('blue/green service helper tests', () => {
@@ -42,7 +44,7 @@ describe('blue/green service helper tests', () => {
       mockLabels[BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
       const mockSelectors = new Map<string, string>()
       mockSelectors[BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {selector: mockSelectors},

@@ -1,3 +1,5 @@
+import { describe, expect, it, vitest } from "vitest";
+
 import * as core from '@actions/core'
 import {ExecOutput} from '@actions/exec'
 import {checkForErrors} from './kubectlUtils'
@@ -39,7 +41,7 @@ describe('Kubectl utils', () => {
       ).toThrow()
 
       // with warn behavior
-      jest.spyOn(core, 'warning').mockImplementation(() => {})
+      vitest.spyOn(core, 'warning').mockImplementation(() => {})
       let warningCalls = 0
       expect(() => checkForErrors([success], true)).not.toThrow()
       expect(core.warning).toBeCalledTimes(warningCalls)

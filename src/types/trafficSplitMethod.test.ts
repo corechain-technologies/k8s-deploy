@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import {parseTrafficSplitMethod, TrafficSplitMethod} from './trafficSplitMethod'
 
 describe('Traffic split method type', () => {

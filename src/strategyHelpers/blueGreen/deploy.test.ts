@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import {getManifestObjects} from './blueGreenHelper'
 import {BlueGreenDeployment} from '../../types/blueGreenTypes'
 import {deployBlueGreen, deployBlueGreenIngress} from './deploy'
@@ -8,7 +10,7 @@ import * as TSutils from '../../utilities/trafficSplitUtils'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 
 describe('deploy tests', () => {
    let testObjects
@@ -28,10 +30,10 @@ describe('deploy tests', () => {
          objects: []
       }
 
-      jest
+      vitest
          .spyOn(routeTester, 'routeBlueGreenForDeploy')
          .mockImplementation(() => Promise.resolve(mockBgDeployment))
-      jest
+      vitest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))
 

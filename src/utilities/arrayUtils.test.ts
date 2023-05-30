@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import {createInlineArray} from './arrayUtils'
 
 describe('array utilities', () => {

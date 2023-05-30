@@ -3,10 +3,11 @@
    "version": "0.0.0",
    "author": "Deepak Sattiraju",
    "license": "MIT",
+   "type": "commonjs",
    "scripts": {
       "build": "npx ncc build src/run.ts -o lib",
-      "test": "jest",
-      "coverage": "jest --coverage=true",
+      "test": "vitest --run",
+      "coverage": "vitest --coverage --run",
       "format": "prettier --write .",
       "format-check": "prettier --check ."
    },
@@ -18,16 +19,20 @@
       "@octokit/core": "^3.5.1",
       "@octokit/plugin-retry": "^3.0.9",
       "@types/minipass": "^3.1.2",
-      "js-yaml": "3.13.1"
+      "js-yaml": "3.13.1",
+      "minimist": "^1.2.0"
+   },
+   "overrides": {
+      "uuid": "^7.0.0"
    },
    "devDependencies": {
-      "@types/jest": "^26.0.0",
       "@types/js-yaml": "^3.12.7",
+      "@types/minimist": "^1.2.0",
       "@types/node": "^12.20.41",
-      "jest": "^26.0.0",
-      "ncc": "^0.3.6",
+      "@vercel/ncc": "^0.36.1",
+      "@vitest/coverage-c8": "^0.31.2",
       "prettier": "^2.7.1",
-      "ts-jest": "^26.0.0",
-      "typescript": "3.9.5"
+      "typescript": "^5.0.4",
+      "vitest": "^0.31.2"
    }
 }

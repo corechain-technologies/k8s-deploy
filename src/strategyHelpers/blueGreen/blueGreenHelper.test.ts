@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import {
    deployWithLabel,
    deleteGreenObjects,
@@ -16,7 +18,7 @@ import {K8sObject} from '../../types/k8sObject'
 import * as manifestUpdateUtils from '../../utilities/manifestUpdateUtils'
 import {ExecOutput} from '@actions/exec'
 
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 
 const kubectl = new Kubectl('')
 
@@ -27,13 +29,13 @@ describe('bluegreenhelper functions', () => {
       Kubectl.mockClear()
       testObjects = getManifestObjects(['test/unit/manifests/test-ingress.yml'])
 
-      jest
+      vitest
          .spyOn(fileHelper, 'writeObjectsToFile')
          .mockImplementationOnce(() => [''])
    })
 
    test('correctly deletes services and workloads according to label', async () => {
-      jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
+      vitest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
 
       const value = await deleteGreenObjects(
          kubectl,
@@ -128,7 +130,7 @@ describe('bluegreenhelper functions', () => {
          exitCode: 0
       }
 
-      jest
+      vitest
          .spyOn(kubectl, 'getResource')
          .mockImplementation(() => Promise.resolve(mockExecOutput))
       const fetched = await fetchResource(
@@ -145,7 +147,7 @@ describe('bluegreenhelper functions', () => {
          exitCode: 0,
          stderr: 'this is a fake error'
       } as ExecOutput
-      jest
+      vitest
          .spyOn(kubectl, 'getResource')
          .mockImplementation(() => Promise.resolve(mockExecOutput))
       let fetched = await fetchResource(
@@ -155,7 +157,7 @@ describe('bluegreenhelper functions', () => {
       )
       expect(fetched).toBe(null)
 
-      jest.spyOn(kubectl, 'getResource').mockImplementation()
+      vitest.spyOn(kubectl, 'getResource').mockImplementation(() => Promise.resolve(null))
       fetched = await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
       expect(fetched).toBe(null)
    })
@@ -166,7 +168,7 @@ describe('bluegreenhelper functions', () => {
          exitCode: 0,
          stderr: 'this is a fake error'
       } as ExecOutput
-      jest
+      vitest
          .spyOn(manifestUpdateUtils, 'UnsetClusterSpecificDetails')
          .mockImplementation(() => {
             throw new Error('test error')

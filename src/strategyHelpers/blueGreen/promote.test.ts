@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import * as core from '@actions/core'
 import {getManifestObjects} from './blueGreenHelper'
 import {
@@ -14,7 +16,7 @@ import * as bgHelper from './blueGreenHelper'
 
 let testObjects
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
 describe('promote tests', () => {
@@ -28,7 +30,7 @@ describe('promote tests', () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
 
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Ingress',
             spec: {},
@@ -53,7 +55,7 @@ describe('promote tests', () => {
    test('fail to promote invalid blue/green ingress', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Ingress',
             spec: {},
@@ -69,7 +71,7 @@ describe('promote tests', () => {
    test('promote blue/green service', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {selector: mockLabels},
@@ -89,14 +91,14 @@ describe('promote tests', () => {
    test('fail to promote invalid blue/green service', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {},
             metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
          })
       )
-      jest
+      vitest
          .spyOn(servicesTester, 'validateServicesState')
          .mockImplementationOnce(() => Promise.resolve(false))
 
@@ -131,7 +133,7 @@ describe('promote tests', () => {
             ]
          }
       }
-      jest
+      vitest
          .spyOn(bgHelper, 'fetchResource')
          .mockImplementation(() => Promise.resolve(mockTsObject))
 
@@ -149,7 +151,7 @@ describe('promote tests', () => {
    test('promote blue/green SMI with bad trafficsplit', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest
+      vitest
          .spyOn(smiTester, 'validateTrafficSplitsState')
          .mockImplementation(() => Promise.resolve(false))
 

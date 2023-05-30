@@ -1,5 +1,5 @@
 import {Kubectl} from './kubectl'
-import * as minimist from 'minimist'
+import minimist = require('minimist')
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
 import * as os from 'os'

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import {getManifestObjects} from './blueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
 import {BlueGreenRejectResult} from '../../types/blueGreenTypes'
@@ -12,7 +14,7 @@ import {
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
 
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 
 describe('reject tests', () => {
    let testObjects
@@ -57,7 +59,7 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green SMI', async () => {
-      jest
+      vitest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))
       const rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)

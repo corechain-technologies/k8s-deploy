@@ -152,6 +152,7 @@ export class Kubectl {
       const args = [
          'rollout',
          'status',
+         `--namespace="${namespace}"`,
          `${resourceType}/${name}`
       ];
 
@@ -183,7 +184,7 @@ export class Kubectl {
    }
 
    protected async execute(args: string[], silent: boolean = false) {
-      args = args.concat(this.getExecuteFlags())
+      args = this.getExecuteFlags(args);
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
       return await getExecOutput(this.kubectlPath, args, {
@@ -191,8 +192,8 @@ export class Kubectl {
       })
    }
 
-   protected getExecuteFlags(): string[] {
-      const flags = []
+   protected getExecuteFlags(flags?: string[]): string[] {
+      flags = flags ?? [];
       if (this.ignoreSSLErrors) {
          flags.push('--insecure-skip-tls-verify')
       }

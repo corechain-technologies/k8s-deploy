@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
+
 import {getManifestObjects, GREEN_LABEL_VALUE} from './blueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
 import {
@@ -11,7 +13,7 @@ import * as fileHelper from '../../utilities/fileUtils'
 const betaFilepath = ['test/unit/manifests/test-ingress.yml']
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
    let testObjects
@@ -19,7 +21,7 @@ describe('ingress blue green helpers', () => {
       //@ts-ignore
       Kubectl.mockClear()
       testObjects = getManifestObjects(ingressFilepath)
-      jest
+      vitest
          .spyOn(fileHelper, 'writeObjectsToFile')
          .mockImplementationOnce(() => [''])
    })
@@ -72,7 +74,7 @@ describe('ingress blue green helpers', () => {
 
    test('it should validate ingresses', async () => {
       // what if nothing gets returned from fetchResource?
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() => Promise.resolve(null))
       let validResponse = await validateIngresses(
          kubectl,
          testObjects.ingressEntityList,
@@ -89,7 +91,7 @@ describe('ingress blue green helpers', () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       mockIngress.metadata.labels = mockLabels
-      jest
+      vitest
          .spyOn(bgHelper, 'fetchResource')
          .mockImplementation(() => Promise.resolve(mockIngress))
       validResponse = await validateIngresses(

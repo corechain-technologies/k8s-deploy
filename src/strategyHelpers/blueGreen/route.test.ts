@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, test, vitest } from "vitest";
 import * as core from '@actions/core'
 import {K8sIngress, TrafficSplitObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
@@ -19,7 +20,7 @@ import {
    routeBlueGreenForDeploy
 } from './route'
 
-jest.mock('../../types/kubectl')
+vitest.mock('../../types/kubectl')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kc = new Kubectl('')
 
@@ -30,7 +31,7 @@ describe('route function tests', () => {
       Kubectl.mockClear()
 
       testObjects = getManifestObjects(ingressFilepath)
-      jest
+      vitest
          .spyOn(fileHelper, 'writeObjectsToFile')
          .mockImplementationOnce(() => [''])
    })
@@ -80,7 +81,7 @@ describe('route function tests', () => {
    })
 
    test('correctly identifies route pattern and acts accordingly', async () => {
-      jest
+      vitest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))
 
