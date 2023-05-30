@@ -247,7 +247,26 @@ describe('Kubectl class', () => {
          )
       })
 
-      it('checks rollout status', async () => {
+      it('checks rollout status (without namespace)', async () => {
+         const resourceType = 'type'
+         const name = 'name'
+         const k = new Kubectl(kubectlPath);
+         expect(await k.checkRolloutStatus(undefined, resourceType, name)).toBe(
+            execReturn
+         )
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'rollout',
+               'status',
+               `${resourceType}/${name}`,
+            ],
+            {silent: false}
+         )
+      })
+
+
+      it('checks rollout status (with namespace)', async () => {
          const resourceType = 'type'
          const name = 'name'
          expect(await kubectl.checkRolloutStatus(testNamespace, resourceType, name)).toBe(
