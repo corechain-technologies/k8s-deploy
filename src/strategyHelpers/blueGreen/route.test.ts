@@ -39,11 +39,10 @@ describe('route function tests', () => {
    test('correctly prepares blue/green ingresses for deployment', async () => {
       const unroutedIngCopy: K8sIngress = JSON.parse(
          JSON.stringify(testObjects.ingressEntityList[0])
-      )
-      unroutedIngCopy.metadata.name = 'nginx-ingress-unrouted'
-      unroutedIngCopy.spec.rules[0].http.paths[0].backend.service.name =
-         'fake-service'
-      testObjects.ingressEntityList.push(unroutedIngCopy)
+      );
+      (unroutedIngCopy as any).metadata.name = 'nginx-ingress-unrouted';
+      (unroutedIngCopy as any).spec.rules[0].http.paths[0].backend.service.name = 'fake-service';
+      testObjects.ingressEntityList.push(unroutedIngCopy as any)
       const value = await routeBlueGreenIngress(
          kc,
          testObjects.serviceNameMap,
@@ -51,16 +50,16 @@ describe('route function tests', () => {
       )
 
       expect(value.objects).toHaveLength(2)
-      expect(value.objects[0].metadata.name).toBe('nginx-ingress')
+      expect((value.objects[0] as any).metadata.name).toBe('nginx-ingress')
       expect(
-         (value.objects[0] as K8sIngress).spec.rules[0].http.paths[0].backend
+         (value.objects[0] as any).spec.rules[0].http.paths[0].backend
             .service.name
       ).toBe('nginx-service-green')
 
-      expect(value.objects[1].metadata.name).toBe('nginx-ingress-unrouted')
+      expect((value.objects[1] as any).metadata.name).toBe('nginx-ingress-unrouted')
       // unrouted services shouldn't get their service name changed
       expect(
-         (value.objects[1] as K8sIngress).spec.rules[0].http.paths[0].backend
+         (value.objects[1] as any).spec.rules[0].http.paths[0].backend
             .service.name
       ).toBe('fake-service')
    })
@@ -73,9 +72,9 @@ describe('route function tests', () => {
       )
 
       expect(value.objects).toHaveLength(1)
-      expect(value.objects[0].metadata.name).toBe('nginx-service')
+      expect((value.objects[0] as any).metadata.name).toBe('nginx-service')
 
-      expect(value.objects[0].metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+      expect((value.objects[0] as any).metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
          GREEN_LABEL_VALUE
       )
    })
@@ -92,7 +91,7 @@ describe('route function tests', () => {
       )
 
       expect(ingressResult.objects.length).toBe(1)
-      expect(ingressResult.objects[0].metadata.name).toBe('nginx-ingress')
+      expect((ingressResult.objects[0] as any).metadata.name).toBe('nginx-ingress')
 
       const serviceResult = await routeBlueGreenForDeploy(
          kc,
@@ -101,7 +100,7 @@ describe('route function tests', () => {
       )
 
       expect(serviceResult.objects.length).toBe(1)
-      expect(serviceResult.objects[0].metadata.name).toBe('nginx-service')
+      expect((serviceResult.objects[0] as any).metadata.name).toBe('nginx-service')
 
       const smiResult = await routeBlueGreenForDeploy(
          kc,
@@ -110,7 +109,7 @@ describe('route function tests', () => {
       )
 
       expect(smiResult.objects).toHaveLength(1)
-      expect(smiResult.objects[0].metadata.name).toBe(
+      expect((smiResult.objects[0] as any).metadata.name).toBe(
          'nginx-service-trafficsplit'
       )
       expect(

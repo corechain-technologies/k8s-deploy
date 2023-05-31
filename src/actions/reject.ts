@@ -29,7 +29,7 @@ export async function reject(
          await rejectBlueGreen(kubectl, manifests)
          break
       default:
-         throw 'Invalid delete deployment strategy'
+         throw new Error('Invalid delete deployment strategy')
    }
 }
 

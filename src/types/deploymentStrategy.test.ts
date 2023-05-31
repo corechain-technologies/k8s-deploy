@@ -4,7 +4,7 @@ import {DeploymentStrategy, parseDeploymentStrategy} from './deploymentStrategy'
 
 describe('Deployment strategy type', () => {
    test('it has required values', () => {
-      const vals = <any>Object.values(DeploymentStrategy)
+      const vals = Object.values(DeploymentStrategy) as any
       expect(vals.includes('canary')).toBe(true)
       expect(vals.includes('blue-green')).toBe(true)
       expect(vals.includes('basic')).toBe(true)

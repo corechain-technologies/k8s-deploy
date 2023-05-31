@@ -41,7 +41,7 @@ export async function deploy(
    core.startGroup('Checking manifest stability')
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
-      models.DEPLOYMENT_TYPES.concat([
+      (models.DEPLOYMENT_TYPES as readonly string[]).concat([
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
@@ -54,10 +54,7 @@ export async function deploy(
       KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS
    ])
    for (const ingressResource of ingressResources) {
-      await kubectl.getResource(
-         KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-         ingressResource.name
-      )
+      await kubectl.getResource(ingressResource)
    }
    core.endGroup()
 

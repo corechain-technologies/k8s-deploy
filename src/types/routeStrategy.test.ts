@@ -4,7 +4,7 @@ import {parseRouteStrategy, RouteStrategy} from './routeStrategy'
 
 describe('Route strategy type', () => {
    test('it has required values', () => {
-      const vals = <any>Object.values(RouteStrategy)
+      const vals = Object.values(RouteStrategy) as any
       expect(vals.includes('ingress')).toBe(true)
       expect(vals.includes('smi')).toBe(true)
       expect(vals.includes('service')).toBe(true)

@@ -1,3 +1,5 @@
+import { PodTemplateSpec } from 'kubernetes-types/core/v1';
+import { K8sObject } from '../types/k8sObject';
 import {
    InputObjectKindNotDefinedError,
    isServiceEntity,
@@ -6,68 +8,69 @@ import {
 } from '../types/kubernetesTypes'
 
 export function updateSpecLabels(
-   inputObject: any,
-   newLabels: Map<string, string>,
+   inputObject: K8sObject,
+   newLabels: Record<string, string>,
    override: boolean
 ) {
-   if (!inputObject) throw NullInputObjectError
+   if (!inputObject) throw new NullInputObjectError()
 
-   if (!inputObject.kind) throw InputObjectKindNotDefinedError
+   if (!inputObject.kind) throw new InputObjectKindNotDefinedError()
 
-   if (!newLabels) return
+   if (!newLabels) return;
 
    let existingLabels = getSpecLabels(inputObject)
    if (override) {
-      existingLabels = newLabels
+      existingLabels = { ...newLabels };
    } else {
-      existingLabels = existingLabels || new Map<string, string>()
-      Object.keys(newLabels).forEach(
-         (key) => (existingLabels[key] = newLabels[key])
-      )
+      existingLabels = { ...existingLabels, ...newLabels };
    }
 
    setSpecLabels(inputObject, existingLabels)
 }
 
-function getSpecLabels(inputObject: any) {
+function getSpecLabels(inputObject: K8sObject) {
    if (!inputObject) return null
 
    if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase())
       return inputObject.metadata.labels
 
-   if (inputObject?.spec?.template?.metadata)
+   if (inputObject?.spec && "template" in inputObject.spec && inputObject.spec.template?.metadata)
       return inputObject.spec.template.metadata.labels
 
    return null
 }
 
-function setSpecLabels(inputObject: any, newLabels: any) {
-   if (!inputObject || !newLabels) return null
+function setSpecLabels(inputObject: K8sObject, newLabels: Record<string, string>) {
+   if (!inputObject || !newLabels) return null;
 
-   if (
-      inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase()
-   ) {
-      inputObject.metadata.labels = newLabels
-      return
+   if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase()) {
+      inputObject.metadata.labels = { ...newLabels };
+      return;
    }
 
-   if (inputObject?.spec?.template?.metatada) {
-      inputObject.spec.template.metatada.labels = newLabels
-      return
+   if (inputObject?.spec && "template" in inputObject.spec && "metadata" in inputObject.spec.template) {
+      inputObject.spec.template.metadata.labels = { ...newLabels };
+      return;
    }
 }
 
-export function getSpecSelectorLabels(inputObject: any) {
-   if (inputObject?.spec?.selector) {
-      if (isServiceEntity(inputObject.kind)) return inputObject.spec.selector
-      else return inputObject.spec.selector.matchLabels
+export function getSpecSelectorLabels(inputObject: K8sObject) {
+   if ("selector" in inputObject?.spec) {
+      if (isServiceEntity(inputObject)) {
+         return inputObject.spec.selector as Record<string, string>;
+      } else {
+         return inputObject.spec.selector.matchLabels as Record<string, string>;
+      }
    }
 }
 
-export function setSpecSelectorLabels(inputObject: any, newLabels: any) {
-   if (inputObject?.spec?.selector) {
-      if (isServiceEntity(inputObject.kind))
-         inputObject.spec.selector = newLabels
-      else inputObject.spec.selector.matchLabels = newLabels
+export function setSpecSelectorLabels(inputObject: K8sObject, newLabels: Record<string, string>) {
+   if ("selector" in inputObject?.spec) {
+      if (isServiceEntity(inputObject)) {
+         inputObject.spec.selector = { ...newLabels };
+      }
+      else {
+         inputObject.spec.selector.matchLabels = { ...newLabels };
+      }
    }
 }

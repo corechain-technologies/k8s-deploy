@@ -40,9 +40,9 @@ describe('blue/green service helper tests', () => {
    })
 
    test('validateServicesState', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels = {};
       mockLabels[BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      const mockSelectors = new Map<string, string>()
+      const mockSelectors = {};
       mockSelectors[BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({

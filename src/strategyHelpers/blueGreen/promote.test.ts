@@ -27,7 +27,7 @@ describe('promote tests', () => {
    })
 
    test('promote blue/green ingress', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
 
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
@@ -42,7 +42,8 @@ describe('promote tests', () => {
       const objects = value.objects
       expect(objects).toHaveLength(2)
 
-      for (const obj of objects) {
+      for (const obj_ of objects) {
+         const obj: any = obj_;
          if (obj.kind === 'Service') {
             expect(obj.metadata.name).toBe('nginx-service')
          } else if (obj.kind == 'Deployment') {
@@ -53,7 +54,7 @@ describe('promote tests', () => {
    })
 
    test('fail to promote invalid blue/green ingress', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
@@ -69,7 +70,7 @@ describe('promote tests', () => {
    })
 
    test('promote blue/green service', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
@@ -79,7 +80,7 @@ describe('promote tests', () => {
          })
       )
 
-      let value = await promoteBlueGreenService(kubectl, testObjects)
+      let value: any = await promoteBlueGreenService(kubectl, testObjects)
 
       expect(value.objects).toHaveLength(1)
       expect(
@@ -89,7 +90,7 @@ describe('promote tests', () => {
    })
 
    test('fail to promote invalid blue/green service', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
@@ -116,8 +117,8 @@ describe('promote tests', () => {
          kind: TRAFFIC_SPLIT_OBJECT,
          metadata: {
             name: 'nginx-service-trafficsplit',
-            labels: new Map<string, string>(),
-            annotations: new Map<string, string>()
+            labels: {},
+            annotations: {},
          },
          spec: {
             service: 'nginx-service',
@@ -132,12 +133,12 @@ describe('promote tests', () => {
                }
             ]
          }
-      }
+      };
       vitest
          .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsObject))
+         .mockImplementation(() => Promise.resolve(mockTsObject as any))
 
-      const deployResult = await promoteBlueGreenSMI(kubectl, testObjects)
+      const deployResult: any = await promoteBlueGreenSMI(kubectl, testObjects)
 
       expect(deployResult.objects).toHaveLength(1)
       expect(deployResult.objects[0].metadata.name).toBe('nginx-deployment')

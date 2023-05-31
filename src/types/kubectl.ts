@@ -8,7 +8,7 @@ import {exec} from 'child_process'
 export interface Resource {
    name: string
    type: string
-   namespace: string
+   namespace?: string
 }
 
 export class Kubectl {
@@ -39,7 +39,7 @@ export class Kubectl {
    ): Promise<ExecOutput> {
       try {
          if (!configurationPaths || configurationPaths?.length === 0)
-            throw Error('Configuration paths must exist')
+            throw new Error('Configuration paths must exist')
 
          const applyArgs: string[] = [
             'apply',
@@ -159,16 +159,12 @@ export class Kubectl {
       return await this.execute(args);
    }
 
-   public async getResource(
-      resourceType: string,
-      name: string,
-      silentFailure: boolean = false
-   ): Promise<ExecOutput> {
+   public async getResource(resource: Resource, silentFailure?: boolean): Promise<ExecOutput> {
       core.debug(
-         'fetching resource of type ' + resourceType + ' and name ' + name
+         'fetching resource of type ' + resource.type + ' and name ' + resource.name
       )
       return await this.execute(
-         ['get', `${resourceType}/${name}`, '-o', 'json'],
+         ['get', '--namespace', `${resource.namespace}`, `${resource.type}/${resource.name}`, '-o', 'json'],
          silentFailure
       )
    }
@@ -215,7 +211,7 @@ export async function getKubectlPath() {
       ? toolCache.find('kubectl', version)
       : await io.which('kubectl', true)
    if (!kubectlPath)
-      throw Error(
+      throw new Error(
          'kubectl not found. You must install it before running this action'
       )
 

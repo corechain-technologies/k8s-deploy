@@ -49,7 +49,7 @@ describe('ingress blue green helpers', () => {
    })
 
    test('it should correctly update ingresses', () => {
-      const updatedIng = getUpdatedBlueGreenIngress(
+      const updatedIng: any = getUpdatedBlueGreenIngress(
          testObjects.ingressEntityList[0],
          testObjects.serviceNameMap,
          GREEN_LABEL_VALUE

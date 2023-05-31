@@ -37,8 +37,8 @@ const mockTsObject: TrafficSplitObject = {
    kind: TRAFFIC_SPLIT_OBJECT,
    metadata: {
       name: 'nginx-service-trafficsplit',
-      labels: new Map<string, string>(),
-      annotations: new Map<string, string>()
+      labels: {},
+      annotations: {},
    },
    spec: {
       service: 'nginx-service',
@@ -76,22 +76,22 @@ describe('SMI Helper tests', () => {
 
       let found = 0
       for (const obj of smiResults.objects) {
-         if (obj.metadata.name === 'nginx-service-stable') {
-            expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+         if ((obj as any).metadata.name === 'nginx-service-stable') {
+            expect((obj as any).metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
                NONE_LABEL_VALUE
             )
-            expect(obj.spec.selector.app).toBe('nginx')
+            expect((obj as any).spec.selector.app).toBe('nginx')
             found++
          }
 
-         if (obj.metadata.name === 'nginx-service-green') {
-            expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+         if ((obj as any).metadata.name === 'nginx-service-green') {
+            expect((obj as any).metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
                GREEN_LABEL_VALUE
             )
             found++
          }
 
-         if (obj.metadata.name === 'nginx-service-trafficsplit') {
+         if ((obj as any).metadata.name === 'nginx-service-trafficsplit') {
             found++
             // expect stable weight to be max val
             const casted = obj as TrafficSplitObject
@@ -164,7 +164,7 @@ describe('SMI Helper tests', () => {
    test('validateTrafficSplitsState', async () => {
       vitest
          .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsObject))
+         .mockImplementation(() => Promise.resolve(mockTsObject as any))
 
       let valResult = await validateTrafficSplitsState(
          kc,

@@ -52,7 +52,7 @@ export async function promote(
          await promoteBlueGreen(kubectl, manifests)
          break
       default:
-         throw Error('Invalid promote deployment strategy')
+         throw new Error('Invalid promote deployment strategy')
    }
 }
 
@@ -137,7 +137,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    }
    const resources: Resource[] = getResources(
       filesToAnnotate,
-      models.DEPLOYMENT_TYPES.concat([
+      (models.DEPLOYMENT_TYPES as readonly string[]).concat([
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
@@ -175,7 +175,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
-      models.DEPLOYMENT_TYPES.concat([
+      (models.DEPLOYMENT_TYPES as readonly string[]).concat([
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )

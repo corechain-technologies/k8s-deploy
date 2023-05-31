@@ -3,6 +3,8 @@ import * as KubernetesConstants from '../types/kubernetesTypes'
 import {Kubectl, Resource} from '../types/kubectl'
 import {checkForErrors} from './kubectlUtils'
 import {sleep} from './timeUtils'
+import { LoadBalancerStatus, PodStatus } from 'kubernetes-types/core/v1';
+import { IngressStatus } from 'kubernetes-types/networking/v1';
 
 export async function checkManifestStability(
    kubectl: Kubectl,
@@ -13,9 +15,9 @@ export async function checkManifestStability(
       const resource = resources[i]
 
       if (
-         KubernetesConstants.WORKLOAD_TYPES_WITH_ROLLOUT_STATUS.indexOf(
+         (KubernetesConstants.WORKLOAD_TYPES_WITH_ROLLOUT_STATUS as readonly string[]).includes(
             resource.type.toLowerCase()
-         ) >= 0
+         )
       ) {
          try {
             const result = await kubectl.checkRolloutStatus(
@@ -41,18 +43,15 @@ export async function checkManifestStability(
             await kubectl.describe(resource.namespace, resource.type, resource.name)
          }
       }
-      if (
-         resource.type ==
-         KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
-      ) {
+      if (isServiceResource(resource)) {
          try {
-            const service = await getService(kubectl, resource.name)
+            const service = await getService(kubectl, resource)
             const {spec, status} = service
             if (spec.type === KubernetesConstants.ServiceTypes.LOAD_BALANCER) {
                if (!isLoadBalancerIPAssigned(status)) {
                   await waitForServiceExternalIPAssignment(
                      kubectl,
-                     resource.name
+                     resource,
                   )
                } else {
                   core.info(
@@ -88,7 +87,11 @@ export async function checkPodStatus(
       await sleep(sleepTimeout)
 
       core.debug(`Polling for pod status: ${podName}`)
-      podStatus = await getPodStatus(kubectl, podName)
+      podStatus = await getPodStatus(kubectl, {
+         name: podName,
+         type: 'pod',
+         namespace,
+      })
 
       if (
          podStatus &&
@@ -99,7 +102,11 @@ export async function checkPodStatus(
       }
    }
 
-   podStatus = await getPodStatus(kubectl, podName)
+   podStatus = await getPodStatus(kubectl, {
+      name: podName,
+      type: 'pod',
+      namespace,
+   })
    switch (podStatus.phase) {
       case 'Succeeded':
       case 'Running':
@@ -128,14 +135,14 @@ export async function checkPodStatus(
    }
 }
 
-async function getPodStatus(kubectl: Kubectl, podName: string) {
-   const podResult = await kubectl.getResource('pod', podName)
+async function getPodStatus(kubectl: Kubectl, resource: Resource & { type: 'pod' }) {
+   const podResult = await kubectl.getResource(resource)
    checkForErrors([podResult])
 
    return JSON.parse(podResult.stdout).status
 }
 
-function isPodReady(podStatus: any): boolean {
+function isPodReady(podStatus: PodStatus): boolean {
    let allContainersAreReady = true
    podStatus.containerStatuses.forEach((container) => {
       if (container.ready === false) {
@@ -153,11 +160,8 @@ function isPodReady(podStatus: any): boolean {
    return allContainersAreReady
 }
 
-async function getService(kubectl: Kubectl, serviceName) {
-   const serviceResult = await kubectl.getResource(
-      KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE,
-      serviceName
-   )
+async function getService(kubectl: Kubectl, resource: Omit<Resource, "type"> & { type: 'service' }) {
+   const serviceResult = await kubectl.getResource(resource)
 
    checkForErrors([serviceResult])
    return JSON.parse(serviceResult.stdout)
@@ -165,27 +169,31 @@ async function getService(kubectl: Kubectl, serviceName) {
 
 async function waitForServiceExternalIPAssignment(
    kubectl: Kubectl,
-   serviceName: string
+   service: Resource & { type: 'service' }
 ): Promise<void> {
    const sleepTimeout = 10 * 1000 // 10 seconds
    const iterations = 18 // 18 * 10 seconds timeout = 3 minutes max timeout
 
    for (let i = 0; i < iterations; i++) {
-      core.info(`Wait for service ip assignment : ${serviceName}`)
+      core.info(`Wait for service ip assignment : ${service.name}`)
       await sleep(sleepTimeout)
 
-      const status = (await getService(kubectl, serviceName)).status
+      const status = (await getService(kubectl, service)).status
       if (isLoadBalancerIPAssigned(status)) {
          core.info(
-            `ServiceExternalIP ${serviceName} ${status.loadBalancer.ingress[0].ip}`
+            `ServiceExternalIP ${service.name} ${status.loadBalancer.ingress[0].ip}`
          )
          return
       }
    }
 
-   core.warning(`Wait for service ip assignment timed out${serviceName}`)
+   core.warning(`Wait for service ip assignment timed out ${service.name}`)
 }
 
-function isLoadBalancerIPAssigned(status: any) {
+function isLoadBalancerIPAssigned(status: IngressStatus) {
    return status?.loadBalancer?.ingress?.length > 0
+}
+
+function isServiceResource(resource: Resource): resource is Resource & { type: 'service' } {
+   return resource.type === KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE;
 }

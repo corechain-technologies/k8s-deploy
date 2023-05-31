@@ -26,10 +26,10 @@ export class PrivateKubectl extends Kubectl {
       }
 
       if (this.resourceGroup === '') {
-         throw Error('Resource group must be specified for private cluster')
+         throw new Error('Resource group must be specified for private cluster')
       }
       if (this.name === '') {
-         throw Error('Cluster name must be specified for private cluster')
+         throw new Error('Cluster name must be specified for private cluster')
       }
 
       const privateClusterArgs = [
@@ -80,7 +80,7 @@ export class PrivateKubectl extends Kubectl {
       )
       if (!silent) core.info(runObj.logs)
       if (runOutput.exitCode !== 0 && runObj.exitCode !== 0) {
-         throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
+         throw new Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
       }
 
       return {

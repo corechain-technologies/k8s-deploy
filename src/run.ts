@@ -62,7 +62,7 @@ export async function run() {
          break
       }
       default: {
-         throw Error(
+         throw new Error(
             'Not a valid action. The allowed actions are "deploy", "promote", and "reject".'
          )
       }

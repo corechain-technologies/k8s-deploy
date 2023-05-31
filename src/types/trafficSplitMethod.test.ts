@@ -4,7 +4,7 @@ import {parseTrafficSplitMethod, TrafficSplitMethod} from './trafficSplitMethod'
 
 describe('Traffic split method type', () => {
    test('it has required values', () => {
-      const vals = <any>Object.values(TrafficSplitMethod)
+      const vals = Object.values(TrafficSplitMethod) as any
       expect(vals.includes('pod')).toBe(true)
       expect(vals.includes('smi')).toBe(true)
    })
