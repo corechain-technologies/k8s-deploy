@@ -20,6 +20,7 @@ import {
    setImagePullSecrets
 } from './manifestPullSecretUtils'
 import {Resource} from '../types/kubectl'
+import { K8sObject } from '../types/k8sObject';
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
    if (manifestFilePaths?.length === 0) {
@@ -41,7 +42,7 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
    return updateImagePullSecretsInManifestFiles(manifestFiles, imagePullSecrets)
 }
 
-export function UnsetClusterSpecificDetails(resource: any) {
+export function UnsetClusterSpecificDetails(resource: K8sObject) {
    if (!resource) {
       return
    }
@@ -140,17 +141,18 @@ export function substituteImageNameInSpecFile(
    }, '')
 }
 
-export function getReplicaCount(inputObject: any): any {
-   if (!inputObject) throw NullInputObjectError
+export function getReplicaCount(inputObject: K8sObject): number {
+   if (!inputObject) throw new NullInputObjectError()
 
    if (!inputObject.kind) {
-      throw InputObjectKindNotDefinedError
+      throw new InputObjectKindNotDefinedError()
    }
 
    const {kind} = inputObject
    if (
       kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
       kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase()
+      && "replicas" in inputObject.spec
    )
       return inputObject.spec.replicas
 
@@ -158,43 +160,38 @@ export function getReplicaCount(inputObject: any): any {
 }
 
 export function updateObjectLabels(
-   inputObject: any,
-   newLabels: Map<string, string>,
+   inputObject: K8sObject,
+   newLabels: Record<string, string>,
    override: boolean = false
 ) {
-   if (!inputObject) throw NullInputObjectError
+   if (!inputObject) throw new NullInputObjectError()
 
-   if (!inputObject.metadata) throw InputObjectMetadataNotDefinedError
+   if (!inputObject.metadata) throw new InputObjectMetadataNotDefinedError()
 
    if (!newLabels) return
 
    if (override) {
-      inputObject.metadata.labels = newLabels
+      inputObject.metadata.labels = { ...newLabels };
    } else {
-      let existingLabels =
-         inputObject.metadata.labels || new Map<string, string>()
+      let existingLabels = { ...inputObject.metadata.labels };
 
-      Object.keys(newLabels).forEach(
-         (key) => (existingLabels[key] = newLabels[key])
-      )
-
-      inputObject.metadata.labels = existingLabels
+      inputObject.metadata.labels = { ...existingLabels, ...newLabels };
    }
 }
 
 export function updateObjectAnnotations(
-   inputObject: any,
+   inputObject: K8sObject,
    newAnnotations: Map<string, string>,
    override: boolean = false
 ) {
-   if (!inputObject) throw NullInputObjectError
+   if (!inputObject) throw new NullInputObjectError()
 
-   if (!inputObject.metadata) throw InputObjectMetadataNotDefinedError
+   if (!inputObject.metadata) throw new InputObjectMetadataNotDefinedError()
 
    if (!newAnnotations) return
 
    if (override) {
-      inputObject.metadata.annotations = newAnnotations
+      inputObject.metadata.annotations = Object.fromEntries(newAnnotations.entries())
    } else {
       const existingAnnotations =
          inputObject.metadata.annotations || new Map<string, string>()
@@ -203,12 +200,12 @@ export function updateObjectAnnotations(
          (key) => (existingAnnotations[key] = newAnnotations[key])
       )
 
-      inputObject.metadata.annotations = existingAnnotations
+      inputObject.metadata.annotations = existingAnnotations instanceof Map ? Object.fromEntries(existingAnnotations.entries()) : existingAnnotations;
    }
 }
 
 export function updateImagePullSecrets(
-   inputObject: any,
+   inputObject: K8sObject,
    newImagePullSecrets: string[],
    override: boolean = false
 ) {
@@ -220,7 +217,7 @@ export function updateImagePullSecrets(
          return {name}
       }
    )
-   let existingImagePullSecretObjects: any = getImagePullSecrets(inputObject)
+   let existingImagePullSecretObjects = getImagePullSecrets(inputObject)
 
    if (override) {
       existingImagePullSecretObjects = newImagePullSecretsObjects
@@ -236,13 +233,13 @@ export function updateImagePullSecrets(
 }
 
 export function updateSelectorLabels(
-   inputObject: any,
-   newLabels: Map<string, string>,
-   override: boolean
+   inputObject: K8sObject,
+   newLabels: Record<string, string>,
+   override: boolean,
 ) {
-   if (!inputObject) throw NullInputObjectError
+   if (!inputObject) throw new NullInputObjectError()
 
-   if (!inputObject.kind) throw InputObjectKindNotDefinedError
+   if (!inputObject.kind) throw new InputObjectKindNotDefinedError()
 
    if (!newLabels) return
 
@@ -251,12 +248,9 @@ export function updateSelectorLabels(
 
    let existingLabels = getSpecSelectorLabels(inputObject)
    if (override) {
-      existingLabels = newLabels
+      existingLabels = { ...newLabels };
    } else {
-      existingLabels = existingLabels || new Map<string, string>()
-      Object.keys(newLabels).forEach(
-         (key) => (existingLabels[key] = newLabels[key])
-      )
+      existingLabels = { ...existingLabels, ...newLabels };
    }
 
    setSpecSelectorLabels(inputObject, existingLabels)
@@ -299,7 +293,7 @@ function updateImagePullSecretsInManifestFiles(
    const newObjectsList = []
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject: any) => {
+      yaml.safeLoadAll(fileContents, (inputObject: K8sObject) => {
          if (inputObject?.kind) {
             const {kind} = inputObject
             if (isWorkloadEntity(kind)) {

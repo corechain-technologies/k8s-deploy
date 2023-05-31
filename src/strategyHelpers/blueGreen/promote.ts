@@ -69,7 +69,7 @@ export async function promoteBlueGreenSMI(
          manifestObjects.serviceEntityList
       ))
    ) {
-      throw Error('Not in promote state SMI')
+      throw new Error('Not in promote state SMI')
    }
 
    // create stable deployments with new configuration

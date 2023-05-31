@@ -41,6 +41,7 @@ import {
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {deploy} from '../actions/deploy'
 import {DeployResult} from '../types/deployResult'
+import { K8sObject } from '../types/k8sObject';
 
 export async function deployManifests(
    files: string[],
@@ -148,7 +149,7 @@ export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any
+   allPods: K8sObject[]
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -182,7 +183,7 @@ async function annotateResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any,
+   allPods: K8sObject[],
    annotationKey: string,
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig

@@ -1,4 +1,4 @@
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl, Resource} from '../../types/kubectl'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as core from '@actions/core'
@@ -16,6 +16,8 @@ import {
 } from '../../utilities/manifestUpdateUtils'
 import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
 import {checkForErrors} from '../../utilities/kubectlUtils'
+import { K8sObject } from '../../types/k8sObject';
+import { DaemonSetSpec, DeploymentSpec } from 'kubernetes-types/apps/v1';
 
 export const CANARY_VERSION_LABEL = 'workflow/version'
 const BASELINE_SUFFIX = '-baseline'
@@ -42,7 +44,7 @@ export async function deleteCanaryDeployment(
    return deletedFiles
 }
 
-export function markResourceAsStable(inputObject: any): object {
+export function markResourceAsStable(inputObject: K8sObject): object {
    if (isResourceMarkedAsStable(inputObject)) {
       return inputObject
    }
@@ -52,29 +54,29 @@ export function markResourceAsStable(inputObject: any): object {
    return newObject
 }
 
-export function isResourceMarkedAsStable(inputObject: any): boolean {
+export function isResourceMarkedAsStable(inputObject: K8sObject): boolean {
    return (
       inputObject?.metadata?.labels[CANARY_VERSION_LABEL] === STABLE_LABEL_VALUE
    )
 }
 
-export function getStableResource(inputObject: any): object {
-   const replicaCount = specContainsReplicas(inputObject.kind)
-      ? inputObject.spec.replicas
+export function getStableResource(inputObject: K8sObject): object {
+   const replicaCount = specContainsReplicas(inputObject)
+      ? ("replicas" in inputObject.spec ? inputObject.spec.replicas : 0)
       : 0
 
    return getNewCanaryObject(inputObject, replicaCount, STABLE_LABEL_VALUE)
 }
 
 export function getNewBaselineResource(
-   stableObject: any,
+   stableObject: K8sObject,
    replicas?: number
 ): object {
    return getNewCanaryObject(stableObject, replicas, BASELINE_LABEL_VALUE)
 }
 
 export function getNewCanaryResource(
-   inputObject: any,
+   inputObject: K8sObject,
    replicas?: number
 ): object {
    return getNewCanaryObject(inputObject, replicas, CANARY_LABEL_VALUE)
@@ -82,12 +84,11 @@ export function getNewCanaryResource(
 
 export async function fetchResource(
    kubectl: Kubectl,
-   kind: string,
-   name: string
+   resource: Resource,
 ) {
    let result: ExecOutput
    try {
-      result = await kubectl.getResource(kind, name)
+      result = await kubectl.getResource(resource)
    } catch (e) {
       core.debug(`detected error while fetching resources: ${e}`)
    }
@@ -123,7 +124,7 @@ export function getStableResourceName(name: string) {
 }
 
 export function getBaselineDeploymentFromStableDeployment(
-   inputObject: any,
+   inputObject: K8sObject,
    replicaCount: number
 ): object {
    // TODO: REFACTOR TO MAKE EVERYTHING TYPE SAFE
@@ -136,18 +137,18 @@ export function getBaselineDeploymentFromStableDeployment(
       inputObject,
       replicaCount,
       BASELINE_LABEL_VALUE
-   ) as any
+   )
    newObject.metadata.name = newName
 
    return newObject
 }
 
 function getNewCanaryObject(
-   inputObject: any,
+   inputObject: K8sObject,
    replicas: number,
    type: string
-): object {
-   const newObject = JSON.parse(JSON.stringify(inputObject))
+) {
+   const newObject: K8sObject = JSON.parse(JSON.stringify(inputObject))
 
    // Updating name
    if (type === CANARY_LABEL_VALUE) {
@@ -162,22 +163,22 @@ function getNewCanaryObject(
 
    addCanaryLabelsAndAnnotations(newObject, type)
 
-   if (specContainsReplicas(newObject.kind)) {
+   if ("replicas" in newObject.spec) {
       newObject.spec.replicas = replicas
    }
 
    return newObject
 }
 
-function specContainsReplicas(kind: string) {
+function specContainsReplicas(obj: K8sObject): obj is Omit<K8sObject, "spec"> & { spec: DeploymentSpec | DaemonSetSpec } {
    return (
-      kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
-      kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase() &&
-      !isServiceEntity(kind)
+      obj.kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
+      obj.kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase() &&
+      !isServiceEntity(obj)
    )
 }
 
-function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
+function addCanaryLabelsAndAnnotations(inputObject: K8sObject, type: string) {
    const newLabels = new Map<string, string>()
    newLabels[CANARY_VERSION_LABEL] = type
 
@@ -185,7 +186,7 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
    updateObjectAnnotations(inputObject, newLabels, false)
    updateSelectorLabels(inputObject, newLabels, false)
 
-   if (!isServiceEntity(inputObject.kind)) {
+   if (!isServiceEntity(inputObject)) {
       updateSpecLabels(inputObject, newLabels, false)
    }
 }

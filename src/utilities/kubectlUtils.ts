@@ -30,7 +30,10 @@ export async function getLastSuccessfulRunSha(
    annotationKey: string
 ): Promise<string> {
    try {
-      const result = await kubectl.getResource('namespace', namespaceName)
+      const result = await kubectl.getResource({
+         type: 'namespace',
+         name: namespaceName,
+      })
       if (result?.stderr) {
          core.warning(result.stderr)
          return process.env.GITHUB_SHA

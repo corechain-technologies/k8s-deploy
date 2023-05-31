@@ -44,7 +44,7 @@ describe('Kubernetes types', () => {
          'pod',
          'statefulset'
       ]
-      expect(expected.every((val) => DEPLOYMENT_TYPES.includes(val))).toBe(true)
+      expect(expected.every((val) => DEPLOYMENT_TYPES.includes(val as any))).toBe(true)
    })
 
    it('contains workload types', () => {
@@ -57,52 +57,59 @@ describe('Kubernetes types', () => {
          'job',
          'cronjob'
       ]
-      expect(expected.every((val) => WORKLOAD_TYPES.includes(val))).toBe(true)
+      expect(expected.every((val) => WORKLOAD_TYPES.includes(val as any))).toBe(true)
    })
 
    it('contains workload types with rollout status', () => {
       const expected = ['deployment', 'daemonset', 'statefulset']
       expect(
          expected.every((val) =>
-            WORKLOAD_TYPES_WITH_ROLLOUT_STATUS.includes(val)
+            WORKLOAD_TYPES_WITH_ROLLOUT_STATUS.includes(val as any)
          )
       ).toBe(true)
    })
 
-   it('checks if kind is deployment entity', () => {
-      // throws on no kind
-      expect(() => isDeploymentEntity(undefined)).toThrow(
-         ResourceKindNotDefinedError
-      )
-
-      expect(isDeploymentEntity('deployment')).toBe(true)
-      expect(isDeploymentEntity('Deployment')).toBe(true)
-      expect(isDeploymentEntity('deploymenT')).toBe(true)
-      expect(isDeploymentEntity('DEPLOYMENT')).toBe(true)
+   describe("isDeploymentEntity", () => {
+      it('checks if kind is undefined', () => {
+         // throws on no kind
+         expect(() => isDeploymentEntity(undefined)).toThrow(
+            ResourceKindNotDefinedError
+         )
+      })
+      it('checks if kind is deployment entity', () => {
+         expect(isDeploymentEntity({ kind: 'deployment' } as any)).toBe(true)
+         expect(isDeploymentEntity({ kind: 'Deployment' } as any)).toBe(true)
+         expect(isDeploymentEntity({ kind: 'deploymenT' } as any)).toBe(true)
+         expect(isDeploymentEntity({ kind: 'DEPLOYMENT' } as any)).toBe(true)
+      })
    })
 
-   it('checks if kind is workload entity', () => {
-      // throws on no kind
-      expect(() => isWorkloadEntity(undefined)).toThrow(
-         ResourceKindNotDefinedError
-      )
+   describe("isWorkloadEntity", () => {
+      it("checks if kind is undefined", () => {
+         // throws on no kind
+         expect(() => isWorkloadEntity(undefined)).toThrow(
+            ResourceKindNotDefinedError
+         )
+      })
 
-      expect(isWorkloadEntity('deployment')).toBe(true)
-      expect(isWorkloadEntity('Deployment')).toBe(true)
-      expect(isWorkloadEntity('deploymenT')).toBe(true)
-      expect(isWorkloadEntity('DEPLOYMENT')).toBe(true)
-   })
+      it('checks if kind is workload entity', () => {
+         expect(isWorkloadEntity('deployment')).toBe(true)
+         expect(isWorkloadEntity('Deployment')).toBe(true)
+         expect(isWorkloadEntity('deploymenT')).toBe(true)
+         expect(isWorkloadEntity('DEPLOYMENT')).toBe(true)
+      })
+   });
 
-   it('checks if kind is service entity', () => {
-      // throws on no kind
-      expect(() => isServiceEntity(undefined)).toThrow(
-         ResourceKindNotDefinedError
-      )
-
-      expect(isServiceEntity('service')).toBe(true)
-      expect(isServiceEntity('Service')).toBe(true)
-      expect(isServiceEntity('servicE')).toBe(true)
-      expect(isServiceEntity('SERVICE')).toBe(true)
+   describe("isServiceEntity", () => {
+      it("throws on no kind", () => {
+         expect(() => isServiceEntity(undefined)).toThrow(ResourceKindNotDefinedError)
+      })
+      it('checks if kind is service entity', () => {
+         expect(isServiceEntity({ kind: 'service' } as any)).toBe(true)
+         expect(isServiceEntity({ kind: 'Service' } as any)).toBe(true)
+         expect(isServiceEntity({ kind: 'servicE' } as any)).toBe(true)
+         expect(isServiceEntity({ kind: 'SERVICE' } as any)).toBe(true)
+      })
    })
 
    it('checks if kind is ingress entity', () => {
@@ -111,9 +118,9 @@ describe('Kubernetes types', () => {
          ResourceKindNotDefinedError
       )
 
-      expect(isIngressEntity('ingress')).toBe(true)
-      expect(isIngressEntity('Ingress')).toBe(true)
-      expect(isIngressEntity('ingresS')).toBe(true)
-      expect(isIngressEntity('INGRESS')).toBe(true)
+      expect(isIngressEntity({ kind: 'ingress' } as any)).toBe(true)
+      expect(isIngressEntity({ kind: 'Ingress' } as any)).toBe(true)
+      expect(isIngressEntity({ kind: 'ingresS' } as any)).toBe(true)
+      expect(isIngressEntity({ kind: 'INGRESS' } as any)).toBe(true)
    })
 })
