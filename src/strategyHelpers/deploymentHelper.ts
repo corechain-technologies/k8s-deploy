@@ -41,6 +41,8 @@ import {
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {deploy} from '../actions/deploy'
 import {DeployResult} from '../types/deployResult'
+import { K8sObject, TrafficSplitObject } from '../types/k8sObject';
+import { PodList } from 'kubernetes-types/core/v1';
 
 export async function deployManifests(
    files: string[],
@@ -63,6 +65,11 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
+         if (!routeStrategy) {
+            throw new Error(
+               `Invalid route-method input: ${core.getInput('route-method')}`
+            )
+         }
          const blueGreenDeployment = await deployBlueGreen(
             kubectl,
             files,
@@ -112,16 +119,14 @@ export async function deployManifests(
 }
 
 function appendStableVersionLabelToResource(files: string[]): string[] {
-   const manifestFiles = []
-   const newObjectsList = []
+   const manifestFiles: string[] = []
+   const newObjectsList: (K8sObject | TrafficSplitObject)[] = []
 
    files.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
 
-      yaml.safeLoadAll(fileContents, function (inputObject) {
-         const {kind} = inputObject
-
-         if (isDeploymentEntity(kind)) {
+      yaml.safeLoadAll(fileContents, function (inputObject: K8sObject) {
+         if (isDeploymentEntity(inputObject)) {
             const updatedObject =
                canaryDeploymentHelper.markResourceAsStable(inputObject)
             newObjectsList.push(updatedObject)
@@ -148,7 +153,7 @@ export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any
+   allPods: PodList
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -182,7 +187,7 @@ async function annotateResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any,
+   allPods: PodList,
    annotationKey: string,
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig
@@ -201,17 +206,18 @@ async function annotateResources(
          core.debug('printing objects getting annotated...')
          const fileContents = fs.readFileSync(filePath).toString()
          const inputObjects = yaml.safeLoadAll(fileContents)
-         for (const inputObject of inputObjects) {
+         for (const inputObject_ of inputObjects) {
+            const inputObject: K8sObject = inputObject_;
             core.debug(`object: ${JSON.stringify(inputObject)}`)
          }
       }
    }
 
-   const annotationKeyValStr = `${annotationKey}=${getWorkflowAnnotations(
+   const annotationKeyValStr = `${annotationKey}=${lastSuccessSha ? getWorkflowAnnotations(
       lastSuccessSha,
       workflowFilePath,
       deploymentConfig
-   )}`
+   ) : ''}`
 
    const annotateNamespace = !(
       core.getInput('annotate-namespace').toLowerCase() === 'false'
@@ -261,7 +267,7 @@ async function labelResources(
 ) {
    const labels = [
       `workflowFriendlyName=${cleanLabel(
-         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW)
+         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW!)
       )}`,
       `workflow=${cleanLabel(label)}`
    ]

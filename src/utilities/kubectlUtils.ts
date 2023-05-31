@@ -1,87 +1,87 @@
-import * as core from '@actions/core'
-import {ExecOutput} from '@actions/exec'
-import {Kubectl} from '../types/kubectl'
+import * as core from "@actions/core";
+import { ExecOutput, getExecOutput } from "@actions/exec";
+import { Kubectl } from "../types/kubectl";
+import { PodList } from "kubernetes-types/core/v1";
 
-export function checkForErrors(
-   execResults: ExecOutput[],
-   warnIfError?: boolean
-) {
-   let stderr = ''
-   execResults.forEach((result) => {
-      if (result?.exitCode !== 0) {
-         stderr += result?.stderr + ' \n'
-      } else if (result?.stderr) {
-         core.warning(result.stderr)
-      }
-   })
+export function checkForErrors(execResults: (ExecOutput | null)[] | null, warnIfError?: boolean) {
+    let stderr = "";
+    execResults?.forEach((result) => {
+        if (result?.exitCode !== 0) {
+            stderr += result?.stderr + " \n";
+        } else if (result?.stderr) {
+            core.warning(result.stderr);
+        }
+    });
 
-   if (stderr.length > 0) {
-      if (warnIfError) {
-         core.warning(stderr.trim())
-      } else {
-         throw new Error(stderr.trim())
-      }
-   }
+    if (stderr.length > 0) {
+        if (warnIfError) {
+            core.warning(stderr.trim());
+        } else {
+            throw new Error(stderr.trim());
+        }
+    }
 }
 
 export async function getLastSuccessfulRunSha(
-   kubectl: Kubectl,
-   namespaceName: string,
-   annotationKey: string
-): Promise<string> {
-   try {
-      const result = await kubectl.getResource('namespace', namespaceName)
-      if (result?.stderr) {
-         core.warning(result.stderr)
-         return process.env.GITHUB_SHA
-      } else if (result?.stdout) {
-         const annotationsSet = JSON.parse(result.stdout).metadata.annotations
-         if (annotationsSet && annotationsSet[annotationKey]) {
-            return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"'))
-               .commit
-         } else {
-            return 'NA'
-         }
-      }
-   } catch (ex) {
-      core.warning(`Failed to get commits from cluster. ${JSON.stringify(ex)}`)
-      return ''
-   }
+    kubectl: Kubectl,
+    namespaceName: string,
+    annotationKey: string,
+): Promise<string | undefined> {
+    try {
+        const result = await kubectl.getResource({
+            type: "namespace",
+            name: namespaceName,
+        });
+        if (result?.stderr) {
+            core.warning(result.stderr);
+            return process.env.GITHUB_SHA;
+        } else if (result?.stdout) {
+            const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+            if (annotationsSet && annotationsSet[annotationKey]) {
+                return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"')).commit;
+            } else {
+                return "NA";
+            }
+        }
+    } catch (ex) {
+        core.warning(`Failed to get commits from cluster. ${JSON.stringify(ex)}`);
+        return "";
+    }
 }
 
 export async function annotateChildPods(
-   kubectl: Kubectl,
-   namespace: string,
-   resourceType: string,
-   resourceName: string,
-   annotationKeyValStr: string,
-   allPods
+    kubectl: Kubectl,
+    namespace: string,
+    resourceType: string,
+    resourceName: string,
+    annotationKeyValStr: string,
+    allPods: PodList,
 ): Promise<ExecOutput[]> {
-   let owner = resourceName
-   if (resourceType.toLowerCase().indexOf('deployment') > -1) {
-      owner = await kubectl.getNewReplicaSet(namespace, resourceName)
-   }
+    let owner = resourceName;
+    if (resourceType.toLowerCase().indexOf("deployment") > -1) {
+        owner = await kubectl.getNewReplicaSet(namespace, resourceName);
+    }
 
-   const commandExecutionResults = []
-   if (allPods?.items && allPods.items?.length > 0) {
-      allPods.items.forEach((pod) => {
-         const owners = pod?.metadata?.ownerReferences
-         if (owners) {
-            for (const ownerRef of owners) {
-               if (ownerRef.name === owner) {
-                  commandExecutionResults.push(
-                     kubectl.annotate(
-                        'pod',
-                        pod.metadata.name,
-                        annotationKeyValStr
-                     )
-                  )
-                  break
-               }
+    const commandExecutionResults: Promise<ExecOutput>[] = [];
+    if (allPods?.items && allPods.items?.length > 0) {
+        allPods.items.forEach((pod) => {
+            const owners = pod?.metadata?.ownerReferences;
+            if (owners) {
+                for (const ownerRef of owners) {
+                    if (ownerRef.name === owner) {
+                        if (!pod.metadata?.name) {
+                            console.trace(`pod ${pod.metadata?.name} has no name`);
+                        } else {
+                            commandExecutionResults.push(
+                                kubectl.annotate("pod", pod.metadata.name, annotationKeyValStr),
+                            );
+                            break;
+                        }
+                    }
+                }
             }
-         }
-      })
-   }
+        });
+    }
 
-   return await Promise.all(commandExecutionResults)
+    return await Promise.all(commandExecutionResults);
 }

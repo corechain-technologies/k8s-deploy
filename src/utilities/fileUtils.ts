@@ -7,7 +7,7 @@ import * as yaml from 'js-yaml'
 import {Errorable, succeeded, failed, Failed} from '../types/errorable'
 import {getCurrentTime} from './timeUtils'
 import {isHttpUrl} from './githubUtils'
-import {K8sObject} from '../types/k8sObject'
+import {K8sObject, TrafficSplitObject} from '../types/k8sObject'
 
 export const urlFileKind = 'urlfile'
 
@@ -15,10 +15,10 @@ export function getTempDirectory(): string {
    return process.env['runner.tempDirectory'] || os.tmpdir()
 }
 
-export function writeObjectsToFile(inputObjects: any[]): string[] {
-   const newFilePaths = []
+export function writeObjectsToFile(inputObjects: (K8sObject | TrafficSplitObject)[]): string[] {
+   const newFilePaths: string[] = [];
 
-   inputObjects.forEach((inputObject: any) => {
+   inputObjects.forEach((inputObject) => {
       try {
          const inputObjectString = JSON.stringify(inputObject)
 
@@ -49,14 +49,14 @@ export function writeManifestToFile(
    inputObjectString: string,
    kind: string,
    name: string
-): string {
+): string | undefined {
    if (inputObjectString) {
       try {
          const fileName = getManifestFileName(kind, name)
          fs.writeFileSync(path.join(fileName), inputObjectString)
          return fileName
       } catch (ex) {
-         throw Error(
+         throw new Error(
             `Exception occurred while writing object to file: ${inputObjectString}. Exception: ${ex}`
          )
       }
@@ -85,7 +85,7 @@ export async function getFilesFromDirectoriesAndURLs(
                )
                fullPathSet.add(tempFilePath)
             } catch (e) {
-               throw Error(
+               throw new Error(
                   `encountered error trying to pull YAML from URL ${fileName}: ${e}`
                )
             }
@@ -104,7 +104,7 @@ export async function getFilesFromDirectoriesAndURLs(
             )
          }
       } catch (ex) {
-         throw Error(
+         throw new Error(
             `Exception occurred while reading the file ${fileName}: ${ex}`
          )
       }
@@ -161,7 +161,7 @@ export async function writeYamlFromURLToFile(
 
 function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
    const fileContents = fs.readFileSync(filepath).toString()
-   let inputObjects
+   let inputObjects: K8sObject[];
    try {
       inputObjects = yaml.safeLoadAll(fileContents)
    } catch (e) {

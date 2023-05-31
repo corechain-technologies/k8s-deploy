@@ -20,6 +20,9 @@ export async function run() {
       core.getInput('action', {required: true})
    )
    const strategy = parseDeploymentStrategy(core.getInput('strategy'))
+   if (!strategy) {
+      throw new Error(`Invalid strategy ${core.getInput('strategy')}`);
+   }
    const manifestsInput = core.getInput('manifests', {required: true})
    const manifestFilePaths = manifestsInput
       .split(/[\n,;]+/) // split into each individual manifest
@@ -62,7 +65,7 @@ export async function run() {
          break
       }
       default: {
-         throw Error(
+         throw new Error(
             'Not a valid action. The allowed actions are "deploy", "promote", and "reject".'
          )
       }

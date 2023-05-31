@@ -1,6 +1,6 @@
 import {ExecOutput} from '@actions/exec'
 
 export interface DeployResult {
-   execResult: ExecOutput
+   execResult: ExecOutput | null
    manifestFiles: string[]
 }

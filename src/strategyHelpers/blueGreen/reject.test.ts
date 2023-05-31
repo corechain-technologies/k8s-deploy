@@ -17,7 +17,7 @@ const kubectl = new Kubectl('')
 vitest.mock('../../types/kubectl')
 
 describe('reject tests', () => {
-   let testObjects
+   let testObjects: any;
 
    beforeEach(() => {
       //@ts-ignore
@@ -42,7 +42,7 @@ describe('reject tests', () => {
       }
 
       expect(bgDeployment.objects).toHaveLength(1)
-      expect(bgDeployment.objects[0].metadata.name).toBe('nginx-ingress')
+      expect((bgDeployment.objects[0] as any).metadata.name).toBe('nginx-ingress')
    })
 
    test('reject blue/green service', async () => {
@@ -52,10 +52,10 @@ describe('reject tests', () => {
       const deleteResult = value.deleteResult
 
       expect(deleteResult).toHaveLength(1)
-      expect(deleteResult[0].name).toBe('nginx-deployment-green')
+      expect(deleteResult[0]!.name).toBe('nginx-deployment-green')
 
       expect(bgDeployment.objects).toHaveLength(1)
-      expect(bgDeployment.objects[0].metadata.name).toBe('nginx-service')
+      expect((bgDeployment.objects[0] as any).metadata.name).toBe('nginx-service')
    })
 
    test('reject blue/green SMI', async () => {

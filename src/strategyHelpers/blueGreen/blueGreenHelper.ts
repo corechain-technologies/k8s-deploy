@@ -3,8 +3,8 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
 import {DeployResult} from '../../types/deployResult'
-import {K8sObject, K8sDeleteObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
+import {K8sObject, K8sDeleteObject, TrafficSplitObject} from '../../types/k8sObject'
+import { Kubectl, Resource } from '../../types/kubectl'
 import {
    isDeploymentEntity,
    isIngressEntity,
@@ -23,6 +23,7 @@ import {
    updateObjectLabels,
    updateSelectorLabels
 } from '../../utilities/manifestUpdateUtils'
+import { LabelSelector } from 'kubernetes-types/meta/v1';
 
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'
@@ -74,24 +75,21 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
 
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject) => {
-         if (!!inputObject) {
-            const kind = inputObject.kind
-            const name = inputObject.metadata.name
-
-            if (isDeploymentEntity(kind)) {
+      yaml.safeLoadAll(fileContents, (inputObject: K8sObject) => {
+         if (inputObject) {
+            if (isDeploymentEntity(inputObject)) {
                deploymentEntityList.push(inputObject)
-            } else if (isServiceEntity(kind)) {
+            } else if (isServiceEntity(inputObject)) {
                if (isServiceRouted(inputObject, deploymentEntityList)) {
                   routedServiceEntityList.push(inputObject)
                   serviceNameMap.set(
-                     name,
-                     getBlueGreenResourceName(name, GREEN_SUFFIX)
+                     inputObject.metadata.name,
+                     getBlueGreenResourceName(inputObject.metadata.name, GREEN_SUFFIX)
                   )
                } else {
                   unroutedServiceEntityList.push(inputObject)
                }
-            } else if (isIngressEntity(kind)) {
+            } else if (isIngressEntity(inputObject)) {
                ingressEntityList.push(inputObject)
             } else {
                otherEntitiesList.push(inputObject)
@@ -111,16 +109,16 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
 }
 
 export function isServiceRouted(
-   serviceObject: any[],
-   deploymentEntityList: any[]
-): boolean {
-   const serviceSelector: any = getServiceSelector(serviceObject)
+   serviceObject: K8sObject,
+   deploymentEntityList: K8sObject[]
+): boolean | undefined {
+   const serviceSelector = getServiceSelector(serviceObject);
 
    return (
       serviceSelector &&
       deploymentEntityList.some((depObject) => {
          // finding if there is a deployment in the given manifests the service targets
-         const matchLabels: any = getDeploymentMatchLabels(depObject)
+         const matchLabels = getDeploymentMatchLabels(depObject)
          return (
             matchLabels &&
             isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
@@ -131,7 +129,7 @@ export function isServiceRouted(
 
 export async function deployWithLabel(
    kubectl: Kubectl,
-   deploymentObjectList: any[],
+   deploymentObjectList: K8sObject[],
    nextLabel: string
 ): Promise<BlueGreenDeployment> {
    const newObjectsList = deploymentObjectList.map((inputObject) =>
@@ -146,7 +144,7 @@ export async function deployWithLabel(
 }
 
 export function getNewBlueGreenObject(
-   inputObject: any,
+   inputObject: K8sObject,
    labelValue: string
 ): K8sObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
@@ -165,11 +163,11 @@ export function getNewBlueGreenObject(
 }
 
 export function addBlueGreenLabelsAndAnnotations(
-   inputObject: any,
+   inputObject: K8sObject,
    labelValue: string
 ) {
    //creating the k8s.deploy.color label
-   const newLabels = new Map<string, string>()
+   const newLabels: Record<string, string> = {};
    newLabels[BLUE_GREEN_VERSION_LABEL] = labelValue
 
    // updating object labels and selector labels
@@ -177,7 +175,7 @@ export function addBlueGreenLabelsAndAnnotations(
    updateSelectorLabels(inputObject, newLabels, false)
 
    // updating spec labels if it is not a service
-   if (!isServiceEntity(inputObject.kind)) {
+   if (!isServiceEntity(inputObject)) {
       updateSpecLabels(inputObject, newLabels, false)
    }
 }
@@ -186,27 +184,27 @@ export function getBlueGreenResourceName(name: string, suffix: string) {
    return `${name}${suffix}`
 }
 
-export function getDeploymentMatchLabels(deploymentObject: any): any {
+export function getDeploymentMatchLabels(deploymentObject: K8sObject) {
    if (
       deploymentObject?.kind?.toUpperCase() ==
          KubernetesWorkload.POD.toUpperCase() &&
       deploymentObject?.metadata?.labels
    ) {
       return deploymentObject.metadata.labels
-   } else if (deploymentObject?.spec?.selector?.matchLabels) {
+   } else if (deploymentObject && deploymentObject.spec && "selector" in deploymentObject.spec && deploymentObject?.spec?.selector?.matchLabels) {
       return deploymentObject.spec.selector.matchLabels
    }
 }
 
-export function getServiceSelector(serviceObject: any): any {
-   if (serviceObject?.spec?.selector) {
+export function getServiceSelector(serviceObject: K8sObject) {
+   if (serviceObject.spec && "selector" in serviceObject.spec) {
       return serviceObject.spec.selector
    }
 }
 
 export function isServiceSelectorSubsetOfMatchLabel(
-   serviceSelector: any,
-   matchLabels: any
+   serviceSelector: LabelSelector,
+   matchLabels: string | Record<string, string> | Map<string, string>
 ): boolean {
    const serviceSelectorMap = new Map()
    const matchLabelsMap = new Map()
@@ -233,10 +231,9 @@ export function isServiceSelectorSubsetOfMatchLabel(
 
 export async function fetchResource(
    kubectl: Kubectl,
-   kind: string,
-   name: string
-): Promise<K8sObject> {
-   const result = await kubectl.getResource(kind, name)
+   resource: Resource,
+): Promise<K8sObject | undefined | null> {
+   const result = await kubectl.getResource(resource)
    if (result == null || !!result.stderr) {
       return null
    }
@@ -257,10 +254,13 @@ export async function fetchResource(
 
 export async function deployObjects(
    kubectl: Kubectl,
-   objectsList: any[]
+   objectsList: (K8sObject | TrafficSplitObject)[]
 ): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
    const execResult = await kubectl.apply(manifestFiles)
 
+   if (execResult == null) {
+      console.trace("execResult is null");
+   }
    return {execResult, manifestFiles}
 }

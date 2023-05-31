@@ -10,10 +10,10 @@ export enum TrafficSplitMethod {
  */
 export const parseTrafficSplitMethod = (
    str: string
-): TrafficSplitMethod | undefined =>
-   TrafficSplitMethod[
-      Object.keys(TrafficSplitMethod).filter(
-         (k) =>
-            TrafficSplitMethod[k].toString().toLowerCase() === str.toLowerCase()
-      )[0] as keyof typeof TrafficSplitMethod
-   ]
+): TrafficSplitMethod | undefined => {
+   const lower = str.toLowerCase();
+   switch (lower) {
+      case TrafficSplitMethod.POD: return TrafficSplitMethod.POD;
+      case TrafficSplitMethod.SMI: return TrafficSplitMethod.SMI;
+   }
+}

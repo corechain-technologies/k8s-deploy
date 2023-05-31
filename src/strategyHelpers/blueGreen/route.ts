@@ -21,6 +21,7 @@ import {createTrafficSplitObject} from './smiBlueGreenHelper'
 import * as core from '@actions/core'
 import {K8sObject, TrafficSplitObject} from '../../types/k8sObject'
 import {getBufferTime} from '../../inputUtils'
+import { LoadBalancerIngress } from 'kubernetes-types/core/v1';
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
@@ -67,10 +68,10 @@ export async function routeBlueGreenForDeploy(
 export async function routeBlueGreenIngress(
    kubectl: Kubectl,
    serviceNameMap: Map<string, string>,
-   ingressEntityList: any[]
+   ingressEntityList: K8sObject[]
 ): Promise<BlueGreenDeployment> {
    // const newObjectsList = []
-   const newObjectsList: K8sObject[] = ingressEntityList.map((obj) => {
+   const newObjectsList: (K8sObject)[] = ingressEntityList.map((obj) => {
       if (isIngressRouted(obj, serviceNameMap)) {
          const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
             obj,
@@ -92,7 +93,7 @@ export async function routeBlueGreenIngress(
 export async function routeBlueGreenIngressUnchanged(
    kubectl: Kubectl,
    serviceNameMap: Map<string, string>,
-   ingressEntityList: any[]
+   ingressEntityList: K8sObject[]
 ): Promise<BlueGreenDeployment> {
    const objects = ingressEntityList.filter((ingress) =>
       isIngressRouted(ingress, serviceNameMap)
@@ -105,7 +106,7 @@ export async function routeBlueGreenIngressUnchanged(
 export async function routeBlueGreenService(
    kubectl: Kubectl,
    nextLabel: string,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<BlueGreenDeployment> {
    const objects = serviceEntityList.map((serviceObject) =>
       getUpdatedBlueGreenService(serviceObject, nextLabel)
@@ -119,7 +120,7 @@ export async function routeBlueGreenService(
 export async function routeBlueGreenSMI(
    kubectl: Kubectl,
    nextLabel: string,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<BlueGreenDeployment> {
    // let tsObjects: TrafficSplitObject[] = []
 

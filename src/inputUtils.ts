@@ -10,7 +10,7 @@ export function getBufferTime(): number {
       core.getInput('version-switch-buffer') || '0'
    )
    if (inputBufferTime < 0 || inputBufferTime > 300)
-      throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
+      throw new Error('Version switch buffer must be between 0 and 300 (inclusive)')
 
    return inputBufferTime
 }

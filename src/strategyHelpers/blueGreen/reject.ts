@@ -25,8 +25,7 @@ export async function rejectBlueGreenIngress(
    // delete green services and deployments
    const deleteResult = await deleteGreenObjects(
       kubectl,
-      [].concat(
-         manifestObjects.deploymentEntityList,
+      manifestObjects.deploymentEntityList.concat(
          manifestObjects.serviceEntityList
       )
    )
@@ -77,5 +76,5 @@ export async function rejectBlueGreenSMI(
       manifestObjects.serviceEntityList
    )
 
-   return {routeResult, deleteResult: [].concat(deletedObjects, cleanupResult)}
+   return {routeResult, deleteResult: deletedObjects.concat(cleanupResult)}
 }
