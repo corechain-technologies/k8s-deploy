@@ -28,7 +28,7 @@ describe('File utils', () => {
    })
 
    it('fails when a bad URL is given among other files', async () => {
-      const badUrl = 'https://www.github.com'
+      const badUrl = 'https://www.example.com'
 
       const testPath = path.join('test', 'unit', 'manifests')
       await expect(
@@ -103,7 +103,7 @@ describe('File utils', () => {
    })
 
    it('throws an error for an invalid URL', async () => {
-      const badUrl = 'https://www.github.com'
+      const badUrl = 'https://www.example.com'
       await expect(writeYamlFromURLToFile(badUrl, 0)).rejects.toBeTruthy()
    })
 })

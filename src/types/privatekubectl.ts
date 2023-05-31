@@ -26,10 +26,10 @@ export class PrivateKubectl extends Kubectl {
       }
 
       if (this.resourceGroup === '') {
-         throw Error('Resource group must be specified for private cluster')
+         throw new Error('Resource group must be specified for private cluster')
       }
       if (this.name === '') {
-         throw Error('Cluster name must be specified for private cluster')
+         throw new Error('Cluster name must be specified for private cluster')
       }
 
       const privateClusterArgs = [
@@ -52,7 +52,7 @@ export class PrivateKubectl extends Kubectl {
          eo.cwd = tempDirectory
          privateClusterArgs.push(...['--file', '.'])
 
-         let filenamesArr = filenames[0].split(',')
+         let filenamesArr = filenames[0]?.split(',') ?? ([] as string[]);
          for (let index = 0; index < filenamesArr.length; index++) {
             const file = filenamesArr[index]
 
@@ -80,7 +80,7 @@ export class PrivateKubectl extends Kubectl {
       )
       if (!silent) core.info(runObj.logs)
       if (runOutput.exitCode !== 0 && runObj.exitCode !== 0) {
-         throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
+         throw new Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
       }
 
       return {
@@ -93,13 +93,9 @@ export class PrivateKubectl extends Kubectl {
    private replaceFilnamesWithBasenames(kubectlCmd: string) {
       let exFilenames = this.extractFilesnames(kubectlCmd)
       let filenames = exFilenames.split(' ')
-      let filenamesArr = filenames[0].split(',')
+      let filenamesArr = (filenames[0]?.split(',') ?? ([] as string[])).map((name) => path.basename(name));
 
-      for (let index = 0; index < filenamesArr.length; index++) {
-         filenamesArr[index] = path.basename(filenamesArr[index])
-      }
-
-      let baseFilenames = filenamesArr.join()
+      let baseFilenames = filenamesArr.join(",");
 
       let result = kubectlCmd.replace(exFilenames, baseFilenames)
       return result
@@ -117,15 +113,16 @@ export class PrivateKubectl extends Kubectl {
       return fileNames.join(' ')
    }
 
-   private extractFilesFromMinimist(argv, arg: string): string[] {
-      if (!argv[arg]) {
+   private extractFilesFromMinimist(args: Record<string, string | string[]>, argName: string): string[] {
+      const arg = args[argName];
+      if (!arg) {
          return []
       }
       const toReturn: string[] = []
-      if (typeof argv[arg] === 'string') {
-         toReturn.push(...argv[arg].split(','))
+      if (typeof arg === 'string') {
+         toReturn.push(...arg.split(','))
       } else {
-         for (const value of argv[arg] as string[]) {
+         for (const value of args[argName] as string[]) {
             toReturn.push(...value.split(','))
          }
       }

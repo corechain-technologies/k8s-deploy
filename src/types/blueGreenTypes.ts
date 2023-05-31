@@ -1,9 +1,10 @@
+import { LoadBalancerIngress } from 'kubernetes-types/core/v1';
 import {DeployResult} from './deployResult'
-import {K8sObject, K8sDeleteObject} from './k8sObject'
+import {K8sObject, K8sDeleteObject, TrafficSplitObject} from './k8sObject'
 
 export interface BlueGreenDeployment {
    deployResult: DeployResult
-   objects: K8sObject[]
+   objects: (K8sObject | TrafficSplitObject | LoadBalancerIngress)[]
 }
 
 export interface BlueGreenManifests {

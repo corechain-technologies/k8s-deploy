@@ -22,16 +22,16 @@ import {DeployResult} from '../../types/deployResult'
 import {inputAnnotations} from '../../inputUtils'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
-export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
+export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit' as const
 export const MIN_VAL = 0
 export const MAX_VAL = 100
 
 export async function setupSMI(
    kubectl: Kubectl,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<BlueGreenDeployment> {
-   const newObjectsList = []
-   const trafficObjectList = []
+   const newObjectsList: (K8sObject | TrafficSplitObject)[] = []
+   const trafficObjectList: (K8sObject | TrafficSplitObject)[] = []
 
    serviceEntityList.forEach((serviceObject) => {
       // create a trafficsplit for service
@@ -54,7 +54,7 @@ export async function setupSMI(
       tsObjects.push(tsObject as TrafficSplitObject)
    }
 
-   const objectsToDeploy = [].concat(newObjectsList, tsObjects)
+   const objectsToDeploy = newObjectsList.concat(tsObjects)
 
    // create services
    const smiDeploymentResult: DeployResult = await deployObjects(
@@ -95,8 +95,8 @@ export async function createTrafficSplitObject(
       kind: TRAFFIC_SPLIT_OBJECT,
       metadata: {
          name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
-         annotations: annotations,
-         labels: new Map<string, string>()
+         annotations: Object.fromEntries(annotations.entries()),
+         labels: {},
       },
       spec: {
          service: name,
@@ -133,7 +133,7 @@ export function getGreenSMIServiceResource(inputObject: K8sObject): K8sObject {
 
 export async function validateTrafficSplitsState(
    kubectl: Kubectl,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<boolean> {
    let trafficSplitsInRightState: boolean = true
 
@@ -141,9 +141,12 @@ export async function validateTrafficSplitsState(
       const name = serviceObject.metadata.name
       let trafficSplitObject = await fetchResource(
          kubectl,
-         TRAFFIC_SPLIT_OBJECT,
-         getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
-      )
+         {
+            type: TRAFFIC_SPLIT_OBJECT,
+            name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+            ...(serviceObject.metadata.namespace ? { namespace: serviceObject.metadata.namespace } : {}),
+         }
+      ) as TrafficSplitObject
       core.debug(
          `ts object extracted was ${JSON.stringify(trafficSplitObject)}`
       )
@@ -173,7 +176,7 @@ export async function validateTrafficSplitsState(
 
 export async function cleanupSMI(
    kubectl: Kubectl,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<K8sDeleteObject[]> {
    const deleteList: K8sDeleteObject[] = []
 

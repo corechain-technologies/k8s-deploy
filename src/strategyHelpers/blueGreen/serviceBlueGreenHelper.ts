@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {K8sServiceObject} from '../../types/k8sObject'
+import {K8sObject, K8sServiceObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    addBlueGreenLabelsAndAnnotations,
@@ -10,7 +10,7 @@ import {
 
 // add green labels to configure existing service
 export function getUpdatedBlueGreenService(
-   inputObject: any,
+   inputObject: K8sObject,
    labelValue: string
 ): K8sServiceObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
@@ -22,7 +22,7 @@ export function getUpdatedBlueGreenService(
 
 export async function validateServicesState(
    kubectl: Kubectl,
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
 ): Promise<boolean> {
    let areServicesGreen: boolean = true
 
@@ -30,8 +30,11 @@ export async function validateServicesState(
       // finding the existing routed service
       const existingService = await fetchResource(
          kubectl,
-         serviceObject.kind,
-         serviceObject.metadata.name
+         {
+            name: serviceObject.metadata.name,
+            ...( serviceObject.metadata.namespace ? { namespace: serviceObject.metadata.namespace } : {}),
+            type: serviceObject.kind,
+         }
       )
 
       let isServiceGreen =
@@ -44,6 +47,6 @@ export async function validateServicesState(
    return areServicesGreen
 }
 
-export function getServiceSpecLabel(inputObject: K8sServiceObject): string {
-   return inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL]
+export function getServiceSpecLabel(inputObject: K8sServiceObject): string | undefined {
+   return inputObject.spec?.selector?.[BLUE_GREEN_VERSION_LABEL]
 }

@@ -1,9 +1,14 @@
 {
    "compilerOptions": {
-      "target": "ES6",
+      "target": "ES2019",
+      "lib": ["ES2019"],
       "module": "commonjs",
       "moduleResolution": "node",
       "skipLibCheck": true,
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "isolatedModules": true,
+      "exactOptionalPropertyTypes": true,
    },
-   "exclude": ["node_modules", "test", "src/**/*.test.ts"]
+   "exclude": ["node_modules", "test"]
 }

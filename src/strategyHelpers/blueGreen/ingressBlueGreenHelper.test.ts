@@ -9,6 +9,8 @@ import {
 } from './ingressBlueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
+import { K8sObject } from "../../types/k8sObject";
+import { BlueGreenManifests } from "../../types/blueGreenTypes";
 
 const betaFilepath = ['test/unit/manifests/test-ingress.yml']
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
@@ -16,7 +18,7 @@ const kubectl = new Kubectl('')
 vitest.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
-   let testObjects
+   let testObjects: any;
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
@@ -29,7 +31,7 @@ describe('ingress blue green helpers', () => {
    test('it should correctly classify ingresses', () => {
       expect(
          isIngressRouted(
-            testObjects.ingressEntityList[0],
+            testObjects.ingressEntityList[0]!,
             testObjects.serviceNameMap
          )
       ).toBe(true)
@@ -42,14 +44,14 @@ describe('ingress blue green helpers', () => {
       ).toBe(false)
       expect(
          isIngressRouted(
-            getManifestObjects(betaFilepath).ingressEntityList[0],
+            getManifestObjects(betaFilepath).ingressEntityList[0]!,
             testObjects.serviceNameMap
          )
       ).toBe(true)
    })
 
    test('it should correctly update ingresses', () => {
-      const updatedIng = getUpdatedBlueGreenIngress(
+      const updatedIng: any = getUpdatedBlueGreenIngress(
          testObjects.ingressEntityList[0],
          testObjects.serviceNameMap,
          GREEN_LABEL_VALUE
@@ -62,7 +64,7 @@ describe('ingress blue green helpers', () => {
 
       const oldIngObjects = getManifestObjects(betaFilepath)
       const oldIng = getUpdatedBlueGreenIngress(
-         oldIngObjects.ingressEntityList[0],
+         oldIngObjects.ingressEntityList[0]!,
          oldIngObjects.serviceNameMap,
          GREEN_LABEL_VALUE
       )
@@ -74,7 +76,7 @@ describe('ingress blue green helpers', () => {
 
    test('it should validate ingresses', async () => {
       // what if nothing gets returned from fetchResource?
-      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() => Promise.resolve(null))
+      vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() => Promise.resolve(null as any))
       let validResponse = await validateIngresses(
          kubectl,
          testObjects.ingressEntityList,
@@ -88,7 +90,7 @@ describe('ingress blue green helpers', () => {
       )
       mockIngress.spec.rules[0].http.paths[0].backend.service.name =
          'nginx-service-green'
-      const mockLabels = new Map<string, string>()
+      const mockLabels: Record<string, string> = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       mockIngress.metadata.labels = mockLabels
       vitest

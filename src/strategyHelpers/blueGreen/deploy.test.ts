@@ -65,7 +65,7 @@ describe('deploy tests', () => {
    test('correctly deploys blue/green ingress', async () => {
       const kc = new Kubectl('')
       const value = await deployBlueGreenIngress(kc, ingressFilepath)
-      const nol = value.objects.map((obj) => {
+      const nol = value.objects.map((obj: any) => {
          if (obj.kind === 'Service') {
             expect(obj.metadata.name).toBe('nginx-service-green')
          }

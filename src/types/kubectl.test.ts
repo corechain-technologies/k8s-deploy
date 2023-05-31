@@ -12,7 +12,7 @@ describe('Kubectl path', () => {
    const path = 'path'
 
    it('gets the kubectl path', async () => {
-      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => "")
       vitest.spyOn(io, 'which').mockImplementationOnce(async () => path)
 
       expect(await getKubectlPath()).toBe(path)
@@ -27,12 +27,12 @@ describe('Kubectl path', () => {
 
    it('throws if kubectl not found', async () => {
       // without version
-      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => Promise.resolve(""))
       await expect(() => getKubectlPath()).rejects.toThrow()
 
       // with verision
-      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
-      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => Promise.resolve(""))
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => Promise.resolve(""))
       await expect(() => getKubectlPath()).rejects.toThrow()
    })
 })
@@ -97,7 +97,25 @@ describe('Kubectl class', () => {
          )
       })
 
-      it('describes a resource', async () => {
+      it('describes a resource (without namespace)', async () => {
+         const resourceType = 'type'
+         const resourceName = 'name'
+         const kubectl = new Kubectl(kubectlPath);
+         const result = await kubectl.describe(undefined, resourceType, resourceName)
+         expect(result).toBe(execReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'describe',
+               resourceType,
+               resourceName,
+            ],
+            {silent: false}
+         )
+      })
+
+
+      it('describes a resource (with namespace)', async () => {
          const resourceType = 'type'
          const resourceName = 'name'
          const result = await kubectl.describe(testNamespace, resourceType, resourceName)
@@ -106,10 +124,10 @@ describe('Kubectl class', () => {
             kubectlPath,
             [
                'describe',
-               resourceType,
-               resourceName,
                '--namespace',
                testNamespace,
+               resourceType,
+               resourceName,
             ],
             {silent: false}
          )
@@ -124,10 +142,10 @@ describe('Kubectl class', () => {
             kubectlPath,
             [
                'describe',
-               resourceType,
-               resourceName,
                '--namespace',
                testNamespace,
+               resourceType,
+               resourceName,
             ],
             {silent: true}
          )
@@ -238,7 +256,7 @@ describe('Kubectl class', () => {
          )
       })
 
-      it('gets all pods', async () => {
+      it('gets all pods (with namespace)', async () => {
          expect(await kubectl.getAllPods()).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
@@ -246,6 +264,17 @@ describe('Kubectl class', () => {
             {silent: true}
          )
       })
+
+      it('gets all pods (without  namespace)', async () => {
+         const kubectl = new Kubectl(kubectlPath);
+         expect(await kubectl.getAllPods()).toBe(execReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            ['get', 'pods', '-o', 'json' ],
+            {silent: true}
+         )
+      })
+
 
       it('checks rollout status (without namespace)', async () => {
          const resourceType = 'type'
@@ -285,10 +314,11 @@ describe('Kubectl class', () => {
          )
       })
 
-      it('gets resource', async () => {
+      it('gets resource (without namespace)', async () => {
          const resourceType = 'type'
          const name = 'name'
-         expect(await kubectl.getResource(resourceType, name)).toBe(execReturn)
+         const kubectl = new Kubectl(kubectlPath);
+         expect(await kubectl.getResource({ name, type: resourceType })).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -296,8 +326,25 @@ describe('Kubectl class', () => {
                `${resourceType}/${name}`,
                '-o',
                'json',
+            ],
+            {silent: false}
+         )
+      })
+
+
+      it('gets resource (with namespace)', async () => {
+         const resourceType = 'type'
+         const name = 'name'
+         expect(await kubectl.getResource({ name, type: resourceType, namespace: testNamespace })).toBe(execReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'get',
                '--namespace',
-               testNamespace
+               testNamespace,
+               `${resourceType}/${name}`,
+               '-o',
+               'json',
             ],
             {silent: false}
          )

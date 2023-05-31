@@ -29,6 +29,14 @@ export class GitHubClient {
       })
       const [owner, repo] = this.repository.split('/')
 
+      if (!owner) {
+         throw new Error(`Owner missing in github url (this.repository=${this.repository})`);
+      }
+
+      if (!repo) {
+         throw new Error(`Repo missing in github url (this.repository=${this.repository})`);
+      }
+
       core.debug(`Getting workflows for repo: ${this.repository}`)
       return Promise.resolve(
          await octokit.request(requestUrl, {

@@ -58,8 +58,7 @@ export async function deployBlueGreenSMI(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create services and other objects
-   const newObjectsList = [].concat(
-      manifestObjects.otherObjects,
+   const newObjectsList = manifestObjects.otherObjects.concat(
       manifestObjects.serviceEntityList,
       manifestObjects.ingressEntityList,
       manifestObjects.unroutedServiceEntityList
@@ -104,8 +103,7 @@ export async function deployBlueGreenIngress(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   const servicesAndDeployments = [].concat(
-      manifestObjects.deploymentEntityList,
+   const servicesAndDeployments = manifestObjects.deploymentEntityList.concat(
       manifestObjects.serviceEntityList
    )
    const workloadDeployment: BlueGreenDeployment = await deployWithLabel(
@@ -114,8 +112,7 @@ export async function deployBlueGreenIngress(
       GREEN_LABEL_VALUE
    )
 
-   const otherObjects = [].concat(
-      manifestObjects.otherObjects,
+   const otherObjects = manifestObjects.otherObjects.concat(
       manifestObjects.unroutedServiceEntityList
    )
    await deployObjects(kubectl, otherObjects)
@@ -126,7 +123,7 @@ export async function deployBlueGreenIngress(
 
    return {
       deployResult: workloadDeployment.deployResult,
-      objects: [].concat(workloadDeployment.objects, otherObjects)
+      objects: workloadDeployment.objects.concat(otherObjects)
    }
 }
 
@@ -144,8 +141,7 @@ export async function deployBlueGreenService(
    )
 
    // create other non deployment and non service entities
-   const newObjectsList = [].concat(
-      manifestObjects.otherObjects,
+   const newObjectsList = manifestObjects.otherObjects.concat(
       manifestObjects.ingressEntityList,
       manifestObjects.unroutedServiceEntityList
    )
@@ -154,6 +150,6 @@ export async function deployBlueGreenService(
    // returning deployment details to check for rollout stability
    return {
       deployResult: blueGreenDeployment.deployResult,
-      objects: [].concat(blueGreenDeployment.objects, newObjectsList)
+      objects: blueGreenDeployment.objects.concat(newObjectsList)
    }
 }
