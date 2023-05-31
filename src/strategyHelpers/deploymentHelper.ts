@@ -41,6 +41,8 @@ import {
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {deploy} from '../actions/deploy'
 import {DeployResult} from '../types/deployResult'
+import { K8sObject, TrafficSplitObject } from '../types/k8sObject';
+import { PodList } from 'kubernetes-types/core/v1';
 
 export async function deployManifests(
    files: string[],
@@ -63,6 +65,11 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
+         if (!routeStrategy) {
+            throw new Error(
+               `Invalid route-method input: ${core.getInput('route-method')}`
+            )
+         }
          const blueGreenDeployment = await deployBlueGreen(
             kubectl,
             files,
@@ -112,8 +119,8 @@ export async function deployManifests(
 }
 
 function appendStableVersionLabelToResource(files: string[]): string[] {
-   const manifestFiles = []
-   const newObjectsList = []
+   const manifestFiles: string[] = []
+   const newObjectsList: (K8sObject | TrafficSplitObject)[] = []
 
    files.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
@@ -148,7 +155,7 @@ export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any
+   allPods: PodList
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -182,7 +189,7 @@ async function annotateResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any,
+   allPods: PodList,
    annotationKey: string,
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig
@@ -207,11 +214,11 @@ async function annotateResources(
       }
    }
 
-   const annotationKeyValStr = `${annotationKey}=${getWorkflowAnnotations(
+   const annotationKeyValStr = `${annotationKey}=${lastSuccessSha ? getWorkflowAnnotations(
       lastSuccessSha,
       workflowFilePath,
       deploymentConfig
-   )}`
+   ) : ''}`
 
    const annotateNamespace = !(
       core.getInput('annotate-namespace').toLowerCase() === 'false'
@@ -261,7 +268,7 @@ async function labelResources(
 ) {
    const labels = [
       `workflowFriendlyName=${cleanLabel(
-         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW)
+         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW!)
       )}`,
       `workflow=${cleanLabel(label)}`
    ]

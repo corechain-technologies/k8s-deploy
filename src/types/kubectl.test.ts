@@ -12,7 +12,7 @@ describe('Kubectl path', () => {
    const path = 'path'
 
    it('gets the kubectl path', async () => {
-      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => "")
       vitest.spyOn(io, 'which').mockImplementationOnce(async () => path)
 
       expect(await getKubectlPath()).toBe(path)
@@ -27,12 +27,12 @@ describe('Kubectl path', () => {
 
    it('throws if kubectl not found', async () => {
       // without version
-      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => Promise.resolve(""))
       await expect(() => getKubectlPath()).rejects.toThrow()
 
       // with verision
-      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
-      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(core, 'getInput').mockImplementationOnce(() => Promise.resolve(""))
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => Promise.resolve(""))
       await expect(() => getKubectlPath()).rejects.toThrow()
    })
 })
@@ -288,16 +288,16 @@ describe('Kubectl class', () => {
       it('gets resource', async () => {
          const resourceType = 'type'
          const name = 'name'
-         expect(await kubectl.getResource(resourceType, name)).toBe(execReturn)
+         expect(await kubectl.getResource({ name, type: resourceType, namespace: testNamespace })).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
                'get',
+               '--namespace',
+               testNamespace,
                `${resourceType}/${name}`,
                '-o',
                'json',
-               '--namespace',
-               testNamespace
             ],
             {silent: false}
          )

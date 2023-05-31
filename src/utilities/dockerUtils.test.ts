@@ -11,7 +11,7 @@ describe('docker utilities', () => {
       expect(() => checkDockerPath()).not.toThrow()
 
       // docker not installed
-      vitest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      vitest.spyOn(io, 'which').mockImplementationOnce(async () => "")
       await expect(() => checkDockerPath()).rejects.toThrow()
    })
 })

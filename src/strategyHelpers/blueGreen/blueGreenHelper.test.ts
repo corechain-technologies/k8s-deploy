@@ -23,7 +23,7 @@ vitest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
 describe('bluegreenhelper functions', () => {
-   let testObjects
+   let testObjects: any;
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
@@ -71,9 +71,9 @@ describe('bluegreenhelper functions', () => {
          'test/unit/manifests/anomaly-objects-test.yml'
       ])
       expect(
-         otherObjectsCollection.unroutedServiceEntityList[0].metadata.name
+         otherObjectsCollection.unroutedServiceEntityList[0]!.metadata.name
       ).toBe('unrouted-service')
-      expect(otherObjectsCollection.otherObjects[0].metadata.name).toBe(
+      expect(otherObjectsCollection.otherObjects[0]!.metadata.name).toBe(
          'foobar-rollout'
       )
    })
@@ -110,7 +110,7 @@ describe('bluegreenhelper functions', () => {
       )
 
       expect(modifiedDeployment.metadata.name).toBe('nginx-deployment-green')
-      expect(modifiedDeployment.metadata.labels['k8s.deploy.color']).toBe(
+      expect(modifiedDeployment.metadata.labels!['k8s.deploy.color']).toBe(
          'green'
       )
 
@@ -120,7 +120,7 @@ describe('bluegreenhelper functions', () => {
       )
 
       expect(modifiedSvc.metadata.name).toBe('nginx-service-green')
-      expect(modifiedSvc.metadata.labels['k8s.deploy.color']).toBe('green')
+      expect(modifiedSvc.metadata.labels!['k8s.deploy.color']).toBe('green')
    })
 
    test('correctly fetches k8s objects', async () => {
@@ -134,11 +134,12 @@ describe('bluegreenhelper functions', () => {
          .spyOn(kubectl, 'getResource')
          .mockImplementation(() => Promise.resolve(mockExecOutput))
       const fetched = await fetchResource(
-         kubectl,
-         'nginx-deployment',
-         'Deployment'
+         kubectl, {
+            name: 'nginx-deployment',
+            type: 'Deployment',
+         }
       )
-      expect(fetched.metadata.name).toBe('nginx-deployment')
+      expect(fetched?.metadata.name).toBe('nginx-deployment')
    })
 
    test('exits when fails to fetch k8s objects', async () => {
@@ -152,13 +153,15 @@ describe('bluegreenhelper functions', () => {
          .mockImplementation(() => Promise.resolve(mockExecOutput))
       let fetched = await fetchResource(
          kubectl,
-         'nginx-deployment',
-         'Deployment'
+         {
+            name: 'nginx-deployment',
+            type: 'Deployment',
+         }
       )
       expect(fetched).toBe(null)
 
-      vitest.spyOn(kubectl, 'getResource').mockImplementation(() => Promise.resolve(null))
-      fetched = await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
+      vitest.spyOn(kubectl, 'getResource').mockImplementation(() => Promise.resolve(null as any))
+      fetched = await fetchResource(kubectl, { name: 'nginx-deployment', type: 'Deployment' })
       expect(fetched).toBe(null)
    })
 
@@ -174,12 +177,12 @@ describe('bluegreenhelper functions', () => {
             throw new Error('test error')
          })
       expect(
-         await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
+         await fetchResource(kubectl, { name: 'nginx-deployment', type: 'Deployment' })
       ).toBe(null)
    })
 
    test('gets deployment labels', () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels: Record<string, string> = {};
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       const mockPodObject: K8sObject = {
          kind: 'Pod',
@@ -187,12 +190,12 @@ describe('bluegreenhelper functions', () => {
          spec: {}
       }
       expect(
-         getDeploymentMatchLabels(mockPodObject)[
+         (getDeploymentMatchLabels(mockPodObject) as any)[
             bgHelper.BLUE_GREEN_VERSION_LABEL
          ]
       ).toBe(GREEN_LABEL_VALUE)
       expect(
-         getDeploymentMatchLabels(testObjects.deploymentEntityList[0])['app']
+         (getDeploymentMatchLabels(testObjects.deploymentEntityList[0]) as any)['app']
       ).toBe('nginx')
    })
 })

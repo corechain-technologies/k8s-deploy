@@ -40,14 +40,14 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
       }
    }
 
-   return Promise.resolve(<DeploymentConfig>{
+   return Promise.resolve({
       manifestFilePaths: inputManifestFiles,
       helmChartFilePaths: helmChartPaths,
       dockerfilePaths: imageDockerfilePathMap
    })
 }
 
-async function getDockerfilePath(image: any): Promise<string> {
+async function getDockerfilePath(image: string): Promise<string> {
    await checkDockerPath()
    const dockerExec: DockerExec = new DockerExec('docker')
    await dockerExec.pull(image, [], false)

@@ -14,7 +14,7 @@ import {
    validateServicesState
 } from './serviceBlueGreenHelper'
 
-let testObjects
+let testObjects: any;
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 vitest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
@@ -31,18 +31,18 @@ describe('blue/green service helper tests', () => {
          testObjects.serviceEntityList[0],
          GREEN_LABEL_VALUE
       )
-      expect(newService.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+      expect(newService.metadata.labels![BLUE_GREEN_VERSION_LABEL]).toBe(
          GREEN_LABEL_VALUE
       )
-      expect(newService.spec.selector[BLUE_GREEN_VERSION_LABEL]).toBe(
+      expect(newService?.spec?.selector?.[BLUE_GREEN_VERSION_LABEL]).toBe(
          GREEN_LABEL_VALUE
       )
    })
 
    test('validateServicesState', async () => {
-      const mockLabels = new Map<string, string>()
+      const mockLabels: Record<string, string> = {};
       mockLabels[BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      const mockSelectors = new Map<string, string>()
+      const mockSelectors: Record<string, string> = {};
       mockSelectors[BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       vitest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({

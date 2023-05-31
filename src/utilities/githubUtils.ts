@@ -4,10 +4,13 @@ import * as core from '@actions/core'
 export async function getWorkflowFilePath(
    githubToken: string
 ): Promise<string> {
-   let workflowFilePath = process.env.GITHUB_WORKFLOW
+   let workflowFilePath = process.env.GITHUB_WORKFLOW;
+   if (!workflowFilePath) {
+      throw new Error('GITHUB_WORKFLOW environment variable not set');
+   }
    if (!workflowFilePath.startsWith('.github/workflows/')) {
       const githubClient = new GitHubClient(
-         process.env.GITHUB_REPOSITORY,
+         process.env.GITHUB_REPOSITORY!,
          githubToken
       )
       const response = await githubClient.getWorkflows()

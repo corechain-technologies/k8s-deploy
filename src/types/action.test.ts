@@ -4,7 +4,7 @@ import {Action, parseAction} from './action'
 
 describe('Action type', () => {
    test('it has required values', () => {
-      const vals = <any>Object.values(Action)
+      const vals = Object.values(Action) as any
       expect(vals.includes('deploy')).toBe(true)
       expect(vals.includes('promote')).toBe(true)
       expect(vals.includes('reject')).toBe(true)

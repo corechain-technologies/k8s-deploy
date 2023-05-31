@@ -1,35 +1,35 @@
 import * as core from '@actions/core'
-import {K8sIngress} from '../../types/k8sObject'
+import { K8sObject } from '../../types/k8sObject'
 import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    GREEN_LABEL_VALUE,
    fetchResource
 } from './blueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
+import { Kubectl } from '../../types/kubectl'
 
 const BACKEND = 'backend'
 
 export function getUpdatedBlueGreenIngress(
-   inputObject: any,
+   inputObject: K8sObject,
    serviceNameMap: Map<string, string>,
    type: string
-): K8sIngress {
+): K8sObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
    // add green labels and values
    addBlueGreenLabelsAndAnnotations(newObject, type)
 
    // update ingress labels
-   if (inputObject.apiVersion === 'networking.k8s.io/v1beta1') {
+   if ((inputObject as any).apiVersion === 'networking.k8s.io/v1beta1') {
       return updateIngressBackendBetaV1(newObject, serviceNameMap)
    }
    return updateIngressBackend(newObject, serviceNameMap)
 }
 
 export function updateIngressBackendBetaV1(
-   inputObject: any,
+   inputObject: K8sObject,
    serviceNameMap: Map<string, string>
-): any {
+): K8sObject {
    inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
       if (key.toLowerCase() === BACKEND) {
          const {serviceName} = value
@@ -46,9 +46,9 @@ export function updateIngressBackendBetaV1(
 }
 
 export function updateIngressBackend(
-   inputObject: any,
+   inputObject: K8sObject,
    serviceNameMap: Map<string, string>
-): any {
+) {
    inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
       if (
          key.toLowerCase() === BACKEND &&
@@ -63,7 +63,7 @@ export function updateIngressBackend(
 }
 
 export function isIngressRouted(
-   ingressObject: any,
+   ingressObject: K8sObject,
    serviceNameMap: Map<string, string>
 ): boolean {
    let isIngressRouted: boolean = false
@@ -85,32 +85,35 @@ export function isIngressRouted(
 
 export async function validateIngresses(
    kubectl: Kubectl,
-   ingressEntityList: any[],
+   ingressEntityList: K8sObject[],
    serviceNameMap: Map<string, string>
 ): Promise<{areValid: boolean; invalidIngresses: string[]}> {
    let areValid: boolean = true
    const invalidIngresses = []
 
-   for (const inputObject of ingressEntityList) {
-      if (isIngressRouted(inputObject, serviceNameMap)) {
+   for (const ingress of ingressEntityList) {
+      if (isIngressRouted(ingress, serviceNameMap)) {
          //querying existing ingress
          const existingIngress = await fetchResource(
             kubectl,
-            inputObject.kind,
-            inputObject.metadata.name
+            {
+               name: ingress.metadata.name,
+               ...( ingress.metadata.namespace ? { namespace: ingress.metadata.namespace } : {}),
+               type: ingress.kind,
+            },
          )
 
          const isValid =
             !!existingIngress &&
-            existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] ===
+            existingIngress?.metadata?.labels?.[BLUE_GREEN_VERSION_LABEL] ===
                GREEN_LABEL_VALUE
          if (!isValid) {
             core.debug(
                `Invalid ingress detected (must be in green state): ${JSON.stringify(
-                  inputObject
+                  ingress
                )}`
             )
-            invalidIngresses.push(inputObject.metadata.name)
+            invalidIngresses.push(ingress.metadata.name)
          }
          // to be valid, ingress should exist and should be green
          areValid = areValid && isValid
